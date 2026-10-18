@@ -1,17 +1,21 @@
+import { findAgent } from './catalog'
 import {
   ASK_DECAY,
   ASK_FLOOR,
   EARN_AFTER,
   GATE_AT,
   HANDOFF_MINUTES,
-  WINDOW_MINUTES,
+  SIM_INPUT_TOKENS_PER_MINUTE,
+  SIM_OUTPUT_TOKENS_PER_MINUTE,
 } from './constants'
-import type { RunCell, RunRecord, Step, Task, TaskState } from './types'
+import { costOf, modelInfo } from './models'
+import type { Agent, RunCell, RunRecord, Step, Task, TaskState } from './types'
 
 export interface Sim {
   simT: number
   tasks: Task[]
   steps: Step[]
+  agents: Agent[]
   runs: RunRecord[]
   runId: string | null
   runRecorded: boolean
@@ -24,6 +28,19 @@ export const isFinished = (t: Task) => FINISHED.includes(t.state)
 /** How often an "earned" step still asks, after `streak` approvals in a row. */
 export const askChance = (streak: number) =>
   streak < EARN_AFTER ? 1 : Math.max(ASK_FLOOR, ASK_DECAY ** (streak - EARN_AFTER + 1))
+
+/* ---------- cost ---------- */
+
+export const taskCost = (t: Task) => costOf(t.model, t.inputTokens, t.outputTokens)
+/** A cost is an estimate when the tokens were simulated or the model's price is an example. */
+export const taskEstimated = (t: Task) => !t.live || !modelInfo(t.model).listPrice
+
+export function totalCost(tasks: Task[]) {
+  return {
+    cost: tasks.reduce((sum, t) => sum + taskCost(t), 0),
+    estimated: tasks.some(taskEstimated),
+  }
+}
 
 /* ---------- stages: steps that run side by side ---------- */
 
@@ -67,16 +84,17 @@ export function moveStep(steps: Step[], id: string, drop: Drop): Step[] {
 /* ---------- running ---------- */
 
 let runCounter = 0
+export const newRunId = () => `run-${Date.now().toString(36)}-${++runCounter}`
 
-export function startRun(sim: Sim): Sim {
+/** Stop whatever the current run is doing and queue a fresh run of the flow. */
+export function startRun(sim: Sim, options: { live?: boolean; runId?: string } = {}): Sim {
   const tasks = sim.tasks.map((t): Task =>
     t.runId === sim.runId && (t.state === 'running' || t.state === 'waiting' || t.state === 'pending')
       ? { ...t, state: t.start == null ? 'skipped' : 'stopped', end: t.start == null ? null : sim.simT }
       : t,
   )
-  const runId = `run-${++runCounter}`
-  const stages = toStages(sim.steps)
-  const fresh = stages.flatMap((stage, stageIndex) =>
+  const runId = options.runId ?? newRunId()
+  const fresh = toStages(sim.steps).flatMap((stage, stageIndex) =>
     stage.map(
       (s): Task => ({
         id: `${runId}-${s.id}`,
@@ -84,6 +102,7 @@ export function startRun(sim: Sim): Sim {
         stepId: s.id,
         stage: stageIndex,
         agent: s.agent,
+        model: findAgent(sim.agents, s.agent).model,
         label: s.task || 'Untitled step',
         tools: s.tools,
         minutes: s.minutes,
@@ -96,22 +115,36 @@ export function startRun(sim: Sim): Sim {
         asked: false,
         actedAlone: false,
         gateText: s.gateText ?? `wants to finish “${s.task || 'this step'}”`,
-        log: s.log ?? ['Read the brief', `Working on ${(s.task || 'the step').toLowerCase()}`, 'Checked the result'],
+        log: options.live
+          ? []
+          : (s.log ?? ['Read the brief', `Working on ${(s.task || 'the step').toLowerCase()}`, 'Checked the result']),
+        inputTokens: 0,
+        outputTokens: 0,
+        live: options.live,
       }),
     ),
   )
   return { ...sim, tasks: [...tasks, ...fresh], runId, runRecorded: false }
 }
 
-export function tick(sim: Sim, dt: number, random: () => number = Math.random): Sim {
+function recordRunIfFinished(sim: Sim): Sim {
+  const run = sim.tasks.filter((t) => t.runId === sim.runId)
+  if (sim.runRecorded || !run.length || !run.every(isFinished)) return sim
+  const cells = run.filter((t) => t.gatePassed).map((t): RunCell => (t.asked ? 'asked' : 'acted'))
+  const { cost, estimated } = totalCost(run)
+  return { ...sim, runs: [...sim.runs, { id: sim.runId!, cells, cost, estimated }], runRecorded: true }
+}
+
+/** Advance the clock by `dt` minutes. Simulated tasks also make progress; live ones wait for the runner. */
+export function tick(sim: Sim, dt: number, windowMinutes: number, random: () => number = Math.random): Sim {
   const simT = sim.simT + dt
-  const forgetBefore = simT - WINDOW_MINUTES * 2
+  const forgetBefore = simT - windowMinutes * 2
   const tasks = sim.tasks
     .filter((t) => t.runId === sim.runId || t.end == null || t.end > forgetBefore)
     .map((t) => ({ ...t }))
-  const run = tasks.filter((t) => t.runId === sim.runId)
+  const run = tasks.filter((t) => t.runId === sim.runId && !t.live)
 
-  // Start whichever stage is ready.
+  // Start whichever simulated stage is ready.
   const stageCount = Math.max(0, ...run.map((t) => (t.stage ?? 0) + 1))
   for (let g = 0; g < stageCount; g++) {
     const members = run.filter((t) => t.stage === g && t.state === 'pending')
@@ -127,10 +160,16 @@ export function tick(sim: Sim, dt: number, random: () => number = Math.random): 
     }
   }
 
-  // Move running work forward, pausing at the approval point.
+  // Move simulated work forward, pausing at the approval point.
   for (const t of tasks) {
     if (t.state !== 'running') continue
+    if (t.live) {
+      t.worked += dt
+      continue
+    }
     t.worked += dt
+    t.inputTokens += dt * SIM_INPUT_TOKENS_PER_MINUTE
+    t.outputTokens += dt * SIM_OUTPUT_TOKENS_PER_MINUTE
     if (t.approval !== 'never' && !t.gatePassed && t.worked >= t.minutes * GATE_AT) {
       const streak = sim.steps.find((s) => s.id === t.stepId)?.streak ?? 0
       const ask = t.approval === 'always' || random() < askChance(streak)
@@ -148,32 +187,81 @@ export function tick(sim: Sim, dt: number, random: () => number = Math.random): 
     }
   }
 
-  let { runs, runRecorded } = sim
-  if (!runRecorded && run.length && run.every(isFinished)) {
-    const cells = run.filter((t) => t.gatePassed).map((t): RunCell => (t.asked ? 'asked' : 'acted'))
-    runs = [...runs, { id: sim.runId ?? `run-${runs.length}`, cells }]
-    runRecorded = true
-  }
-
-  return { ...sim, simT, tasks, runs, runRecorded }
+  return recordRunIfFinished({ ...sim, simT, tasks })
 }
 
+/* ---------- events from the real runner ---------- */
+
+export type RunnerEvent =
+  | { type: 'step_started'; stepId: string }
+  | { type: 'step_log'; stepId: string; text: string }
+  | { type: 'step_usage'; stepId: string; inputTokens: number; outputTokens: number }
+  | { type: 'step_waiting'; stepId: string; gateText: string }
+  | { type: 'step_acted_alone'; stepId: string }
+  | { type: 'step_resumed'; stepId: string }
+  | { type: 'step_done'; stepId: string }
+  | { type: 'step_denied'; stepId: string }
+  | { type: 'step_failed'; stepId: string; error: string }
+  | { type: 'step_skipped'; stepId: string }
+  | { type: 'run_done' }
+
+export function applyRunnerEvent(sim: Sim, runId: string, e: RunnerEvent): Sim {
+  if (runId !== sim.runId || e.type === 'run_done') return sim
+  const id = `${runId}-${e.stepId}`
+  const tasks = sim.tasks.map((t): Task => {
+    if (t.id !== id) return t
+    switch (e.type) {
+      case 'step_started':
+        return { ...t, state: 'running', start: sim.simT }
+      case 'step_log':
+        return { ...t, log: [...t.log, e.text] }
+      case 'step_usage':
+        return { ...t, inputTokens: t.inputTokens + e.inputTokens, outputTokens: t.outputTokens + e.outputTokens }
+      case 'step_waiting':
+        return { ...t, state: 'waiting', asked: true, gatePassed: true, gateText: e.gateText, waitingSince: sim.simT }
+      case 'step_acted_alone':
+        return { ...t, actedAlone: true, gatePassed: true }
+      case 'step_resumed':
+        return { ...t, state: 'running' }
+      case 'step_done':
+        return { ...t, state: 'done', end: sim.simT }
+      case 'step_denied':
+        return { ...t, state: 'denied', end: sim.simT }
+      case 'step_failed':
+        return { ...t, state: 'failed', end: t.start == null ? null : sim.simT, log: [...t.log, e.error] }
+      case 'step_skipped':
+        return { ...t, state: 'skipped' }
+    }
+  })
+  return recordRunIfFinished({ ...sim, tasks })
+}
+
+/* ---------- approvals ---------- */
+
+/** Record a decision: approvals build the step's streak, a "no" resets it. */
 export function decide(sim: Sim, taskId: string, approve: boolean): Sim {
   const task = sim.tasks.find((t) => t.id === taskId)
   if (!task || task.state !== 'waiting') return sim
-  const tasks = sim.tasks.map((t): Task =>
-    t.id !== taskId ? t : approve ? { ...t, state: 'running' } : { ...t, state: 'denied', end: sim.simT },
-  )
+  // A live task stays waiting until the runner confirms; the streak still updates now.
+  const tasks = task.live
+    ? sim.tasks
+    : sim.tasks.map((t): Task =>
+        t.id !== taskId ? t : approve ? { ...t, state: 'running' } : { ...t, state: 'denied', end: sim.simT },
+      )
   const steps = sim.steps.map((s) =>
     s.id === task.stepId ? { ...s, streak: approve ? s.streak + 1 : 0 } : s,
   )
-  return { ...sim, tasks, steps }
+  return recordRunIfFinished({ ...sim, tasks, steps })
 }
 
 /** Pretend the flow ran `count` more times and you approved whatever it asked. */
 export function fastForward(sim: Sim, count: number, random: () => number = Math.random): Sim {
   let steps = sim.steps
   const runs = [...sim.runs]
+  const perRun = steps.reduce(
+    (sum, s) => sum + costOf(findAgent(sim.agents, s.agent).model, s.minutes * SIM_INPUT_TOKENS_PER_MINUTE, s.minutes * SIM_OUTPUT_TOKENS_PER_MINUTE),
+    0,
+  )
   for (let n = 0; n < count; n++) {
     const cells: RunCell[] = []
     steps = steps.map((s) => {
@@ -182,7 +270,8 @@ export function fastForward(sim: Sim, count: number, random: () => number = Math
       cells.push(ask ? 'asked' : 'acted')
       return ask ? { ...s, streak: s.streak + 1 } : s
     })
-    runs.push({ id: `ff-${++runCounter}`, cells })
+    runs.push({ id: newRunId(), cells, cost: perRun, estimated: true })
   }
   return { ...sim, steps, runs }
 }
+

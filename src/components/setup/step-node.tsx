@@ -17,12 +17,13 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { AGENTS, AGENT_BY_ID, APPROVAL_LABEL } from '@/lib/catalog'
+import { APPROVAL_LABEL, RUNNABLE_TOOLS, findAgent, toolInfo } from '@/lib/catalog'
 import { EARN_AFTER } from '@/lib/constants'
 import { askChance } from '@/lib/engine'
+import { modelInfo } from '@/lib/models'
 import { stepStatusLine } from '@/lib/status'
 import { agentPatch, useFlow } from '@/lib/store'
-import type { AgentId, Approval, Step } from '@/lib/types'
+import type { Approval, Step } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 export type StepNodeType = Node<{ stepId: string; number: number }, 'step'>
@@ -37,6 +38,8 @@ function trustLine(step: Step) {
 
 function StepNodeView({ data }: NodeProps<StepNodeType>) {
   const step = useFlow((s) => s.steps.find((x) => x.id === data.stepId))
+  const agents = useFlow((s) => s.agents)
+  const realMode = useFlow((s) => s.mode === 'real')
   const canRemove = useFlow((s) => s.steps.length > 1)
   const status = useFlow(
     useShallow((s) => {
@@ -50,8 +53,10 @@ function StepNodeView({ data }: NodeProps<StepNodeType>) {
   const decide = useFlow((s) => s.decide)
 
   if (!step) return null
-  const agent = AGENT_BY_ID[step.agent]
+  const agent = findAgent(agents, step.agent)
+  const model = modelInfo(agent.model, agent.provider)
   const trust = trustLine(step)
+  const unconnected = realMode ? step.tools.filter((t) => !RUNNABLE_TOOLS.has(t)) : []
 
   return (
     <Card
@@ -72,12 +77,15 @@ function StepNodeView({ data }: NodeProps<StepNodeType>) {
           {String(data.number).padStart(2, '0')}
         </span>
         <AgentAvatar agent={step.agent} size="sm" />
-        <Select value={step.agent} onValueChange={(v) => updateStep(step.id, agentPatch(v as AgentId))}>
+        <Select
+          value={step.agent}
+          onValueChange={(v) => updateStep(step.id, agentPatch(findAgent(agents, v)))}
+        >
           <SelectTrigger size="sm" className="nodrag min-w-0 flex-1 font-medium" aria-label="Agent">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {AGENTS.map((a) => (
+            {agents.map((a) => (
               <SelectItem key={a.id} value={a.id}>
                 {a.name}
               </SelectItem>
@@ -118,11 +126,16 @@ function StepNodeView({ data }: NodeProps<StepNodeType>) {
         />
         <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
           <span className="truncate">
-            {agent.model}
+            {model.label} · {agent.effort} effort
             {step.promptEdited && ' · prompt edited'}
           </span>
           <ToolIcons tools={step.tools} />
         </div>
+        {unconnected.length > 0 && (
+          <p className="text-xs text-waiting animate-in fade-in">
+            Not connected for real runs: {unconnected.map((t) => toolInfo(t).name).join(', ')}
+          </p>
+        )}
         <div className="flex flex-col gap-1.5">
           <Label htmlFor={`${step.id}-approval`} className="text-xs text-muted-foreground">
             Before it acts
@@ -153,7 +166,7 @@ function StepNodeView({ data }: NodeProps<StepNodeType>) {
 
       <CardFooter
         data-state={status.state}
-        className="flex min-h-11 items-center gap-2 text-xs text-muted-foreground tabular-nums data-[state=running]:text-running data-[state=waiting]:text-waiting data-[state=denied]:text-failed data-[state=skipped]:text-failed"
+        className="flex min-h-11 items-center gap-2 text-xs text-muted-foreground tabular-nums data-[state=running]:text-running data-[state=waiting]:text-waiting data-[state=denied]:text-failed data-[state=failed]:text-failed data-[state=skipped]:text-failed"
       >
         <StatusDot state={status.state} />
         <span className="truncate">{status.line}</span>

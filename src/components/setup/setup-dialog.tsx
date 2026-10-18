@@ -15,18 +15,20 @@ import { useFlow } from '@/lib/store'
 
 const STEPS = [
   'Paste this into Claude, ChatGPT or your coding agent, and change the first line to what you want done.',
-  'Your agent creates the flow: the steps, which agent does each one, and their prompts.',
-  'It shows up here. Open any prompt to read or tweak it, then press Run.',
+  'Your agent writes a flow.json: the stages, which agent does each step, and their prompts.',
+  'It appears under Flows here. Open any prompt to read or tweak it, then press Run.',
 ]
 
 export function SetupDialog() {
   const open = useFlow((s) => s.setupOpen)
+  const request = useFlow((s) => s.request)
+  const prompt = SETUP_PROMPT(request || 'Describe the work you want done here.')
   const openSetup = useFlow((s) => s.openSetup)
   const [copied, setCopied] = useState(false)
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(SETUP_PROMPT)
+      await navigator.clipboard.writeText(prompt)
       setCopied(true)
     } catch {
       setCopied(false)
@@ -54,7 +56,7 @@ export function SetupDialog() {
           ))}
         </ol>
         <pre className="rounded-lg border bg-muted p-4 font-mono text-sm leading-relaxed whitespace-pre-wrap select-all">
-          {SETUP_PROMPT}
+          {prompt}
         </pre>
         <DialogFooter>
           <DialogClose asChild>

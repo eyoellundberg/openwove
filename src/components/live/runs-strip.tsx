@@ -1,6 +1,7 @@
 import { FastForwardIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FAST_FORWARD_RUNS, RUNS_SHOWN, RUNS_SUMMARY } from '@/lib/constants'
+import { formatCost } from '@/lib/models'
 import { useFlow } from '@/lib/store'
 import type { RunCell } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -16,8 +17,11 @@ export function RunsStrip() {
 
   const shown = runs.slice(-RUNS_SHOWN)
   const offset = runs.length - shown.length
-  const recent = runs.slice(-RUNS_SUMMARY).flatMap((r) => r.cells)
+  const lastRuns = runs.slice(-RUNS_SUMMARY)
+  const recent = lastRuns.flatMap((r) => r.cells)
   const asked = recent.filter((c) => c === 'asked').length
+  const average = lastRuns.length ? lastRuns.reduce((sum, r) => sum + r.cost, 0) / lastRuns.length : 0
+  const averageEstimated = lastRuns.some((r) => r.estimated)
 
   return (
     <section className="flex flex-wrap items-center gap-4 border-t px-4 py-3">
@@ -25,15 +29,20 @@ export function RunsStrip() {
         <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Approvals per run</h3>
         <p className="text-xs text-muted-foreground">
           {recent.length
-            ? `Last ${Math.min(RUNS_SUMMARY, runs.length)} runs: asked you ${asked} of ${recent.length} times`
+            ? `Last ${lastRuns.length} runs: asked you ${asked} of ${recent.length} times`
             : 'Each square is one approval step'}
+          {lastRuns.length > 0 && ` · about ${formatCost(average, averageEstimated)} a run`}
         </p>
       </div>
 
       <div className="flex min-w-0 flex-1 flex-wrap items-end gap-1">
         {!shown.length && <span className="text-sm text-muted-foreground">Runs show up here when the flow finishes.</span>}
         {shown.map((r, i) => (
-          <div key={r.id} title={`Run ${offset + i + 1}`} className="flex flex-col items-center gap-1">
+          <div
+            key={r.id}
+            title={`Run ${offset + i + 1} · ${formatCost(r.cost, r.estimated)}`}
+            className="flex flex-col items-center gap-1"
+          >
             {(r.cells.length ? r.cells : [null]).map((c, j) => (
               <span
                 key={j}

@@ -1,38 +1,35 @@
-export type AgentId = 'researcher' | 'writer' | 'reviewer' | 'ops'
-export type ToolId =
-  | 'google'
-  | 'notion'
-  | 'figma'
-  | 'slack'
-  | 'github'
-  | 'stripe'
-  | 'gmail'
-  | 'linear'
-  | 'hubspot'
-export type Vendor = 'anthropic' | 'openai' | 'google'
+import type { APPROVALS, EFFORTS, PROVIDERS } from './flow-file'
+
+export type Provider = (typeof PROVIDERS)[number]
+export type Effort = (typeof EFFORTS)[number]
 
 /** What a step does before it takes its final action. */
-export type Approval = 'never' | 'always' | 'earned'
+export type Approval = (typeof APPROVALS)[number]
 
 /** A step either starts a new stage, or runs alongside the step before it. */
 export type StepMode = 'after' | 'with'
 
+/** Simulated runs play back made-up work; real runs call models through the local runner. */
+export type RunMode = 'simulated' | 'real'
+
 export interface Agent {
-  id: AgentId
+  id: string
   name: string
+  provider: Provider
+  /** The provider's model id, e.g. "claude-sonnet-5-5". */
   model: string
-  vendor: Vendor
-  tools: ToolId[]
+  effort: Effort
+  tools: string[]
 }
 
 export interface Step {
   id: string
-  agent: AgentId
+  agent: string
   task: string
   prompt: string
   promptEdited: boolean
-  tools: ToolId[]
-  /** How long the demo pretends this step takes, in simulated minutes. */
+  tools: string[]
+  /** How long a simulated run pretends this step takes, in minutes. */
   minutes: number
   mode: StepMode
   approval: Approval
@@ -40,7 +37,7 @@ export interface Step {
   streak: number
   /** What the tray says the agent wants to do, e.g. "wants to publish the page". */
   gateText?: string
-  /** What the agent reports while it works, revealed as it progresses. */
+  /** What the agent reports while it works, revealed as it progresses (simulated runs). */
   log?: string[]
 }
 
@@ -61,9 +58,10 @@ export interface Task {
   stepId?: string
   /** Stage index inside its run; steps in the same stage run side by side. */
   stage?: number
-  agent: AgentId
+  agent: string
+  model: string
   label: string
-  tools: ToolId[]
+  tools: string[]
   minutes: number
   worked: number
   start: number | null
@@ -75,6 +73,10 @@ export interface Task {
   actedAlone: boolean
   gateText: string
   log: string[]
+  inputTokens: number
+  outputTokens: number
+  /** Driven by the real runner instead of the simulation. */
+  live?: boolean
   waitingSince?: number
 }
 
@@ -83,6 +85,9 @@ export type RunCell = 'asked' | 'acted'
 export interface RunRecord {
   id: string
   cells: RunCell[]
+  cost: number
+  /** Some of the cost uses example prices or simulated token counts. */
+  estimated: boolean
 }
 
 export type View = 'setup' | 'live'

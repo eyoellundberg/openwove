@@ -1,8 +1,13 @@
 import { PauseIcon, PlayIcon, RotateCcwIcon, SparkleIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { ModeSelect, RunnerNote } from '@/components/shared/mode-select'
+import { Notice } from '@/components/shared/notice'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardAction, CardHeader, CardTitle } from '@/components/ui/card'
+import { WINDOW_MINUTES } from '@/lib/constants'
+import { totalCost } from '@/lib/engine'
+import { formatCost } from '@/lib/models'
 import { useFlow } from '@/lib/store'
 import { RunsStrip } from './runs-strip'
 import { Timeline } from './timeline'
@@ -16,6 +21,11 @@ export function LiveView() {
   const paused = useFlow((s) => s.paused)
   const togglePause = useFlow((s) => s.togglePause)
   const run = useFlow((s) => s.run)
+  const mode = useFlow((s) => s.mode)
+  const runCost = useFlow((s) => {
+    const { cost, estimated } = totalCost(s.tasks.filter((t) => t.runId === s.runId))
+    return formatCost(cost, estimated)
+  })
   const [flashId, setFlashId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -51,6 +61,7 @@ export function LiveView() {
             <span className="size-2 rounded-full bg-current" />
             {waiting} need you
           </span>
+          <span className="text-sm font-normal text-muted-foreground tabular-nums">{runCost} this run</span>
         </CardTitle>
         <CardAction className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={togglePause}>
@@ -61,11 +72,16 @@ export function LiveView() {
             <RotateCcwIcon />
             Run again
           </Button>
+          <ModeSelect />
           <Badge variant="secondary" className="hidden sm:inline-flex">
-            Last 30m
+            Last {WINDOW_MINUTES[mode]}m
           </Badge>
         </CardAction>
       </CardHeader>
+      <div className="flex flex-col gap-2 px-4 pt-3 empty:hidden">
+        <Notice />
+        {mode === 'real' && <RunnerNote />}
+      </div>
       <Timeline onFlag={flag} />
       <WaitingTray flashId={flashId} />
       <RunsStrip />

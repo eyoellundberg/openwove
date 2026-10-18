@@ -1,18 +1,14 @@
-import type { Agent, AgentId, Approval, ToolId } from './types'
+import type { Agent, Approval } from './types'
 
-export const AGENTS: Agent[] = [
-  { id: 'researcher', name: 'Researcher', model: 'Opus 5.5', vendor: 'anthropic', tools: ['google', 'notion'] },
-  { id: 'writer', name: 'Writer', model: 'Sonnet 5.5', vendor: 'anthropic', tools: ['figma', 'notion'] },
-  { id: 'reviewer', name: 'Reviewer', model: 'GPT-6 Sol', vendor: 'openai', tools: ['notion', 'slack'] },
-  { id: 'ops', name: 'Ops', model: 'Gemini 3.8 Flash', vendor: 'google', tools: ['stripe', 'github'] },
-]
+interface ToolInfo {
+  letter: string
+  name: string
+  className: string
+}
 
-export const AGENT_BY_ID = Object.fromEntries(AGENTS.map((a) => [a.id, a])) as Record<AgentId, Agent>
-
-export const laneOf = (agent: AgentId) => AGENTS.findIndex((a) => a.id === agent)
-
-/** Tool tiles use Tailwind palette colors so they read in both themes. */
-export const TOOLS: Record<ToolId, { letter: string; name: string; className: string }> = {
+/** Known tools get their own tile; any other tool id from a flow file gets a neutral one. Tailwind palette colors read in both themes. */
+const TOOLS: Record<string, ToolInfo> = {
+  files: { letter: 'Fs', name: 'Files', className: 'bg-emerald-600' },
   google: { letter: 'G', name: 'Google', className: 'bg-blue-500' },
   notion: { letter: 'N', name: 'Notion', className: 'bg-neutral-600' },
   figma: { letter: 'F', name: 'Figma', className: 'bg-orange-600' },
@@ -24,8 +20,27 @@ export const TOOLS: Record<ToolId, { letter: string; name: string; className: st
   hubspot: { letter: 'H', name: 'HubSpot', className: 'bg-orange-500' },
 }
 
+export function toolInfo(id: string): ToolInfo {
+  return TOOLS[id] ?? { letter: id.slice(0, 1).toUpperCase(), name: id, className: 'bg-neutral-500' }
+}
+
+/** Tools the local runner can actually connect today. */
+export const RUNNABLE_TOOLS = new Set(['files'])
+
 export const APPROVAL_LABEL: Record<Approval, string> = {
   never: 'Don’t ask me',
   always: 'Always ask me',
   earned: 'Ask until it’s earned it',
+}
+
+// Cached so a missing agent returns the same object each time (stable for store selectors).
+const missing = new Map<string, Agent>()
+
+export function findAgent(agents: Agent[], id: string): Agent {
+  const found = agents.find((a) => a.id === id)
+  if (found) return found
+  if (!missing.has(id)) {
+    missing.set(id, { id, name: id, provider: 'anthropic', model: 'unknown', effort: 'medium', tools: [] })
+  }
+  return missing.get(id)!
 }

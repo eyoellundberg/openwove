@@ -2,7 +2,9 @@ import { CheckIcon, TriangleAlertIcon } from 'lucide-react'
 import { ToolIcons } from '@/components/shared/tool-icons'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { AGENT_BY_ID } from '@/lib/catalog'
+import { taskCost, taskEstimated } from '@/lib/engine'
+import { formatCost } from '@/lib/models'
+import { useAgent } from '@/lib/store'
 import { STATE_NAME, elapsed, formatMinutes, progressLog } from '@/lib/status'
 import type { Task } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -25,6 +27,8 @@ interface TaskBarProps {
 }
 
 export function TaskBar({ task, now, left, width, onFlag }: TaskBarProps) {
+  const agent = useAgent(task.agent)
+  const cost = formatCost(taskCost(task), taskEstimated(task))
   const lines = progressLog(task).slice(-2)
   if (task.state === 'waiting') lines.push(`Waiting: ${task.gateText}`)
   if (task.actedAlone) lines.push('Didn’t ask you: you’ve approved this enough times in a row')
@@ -59,6 +63,9 @@ export function TaskBar({ task, now, left, width, onFlag }: TaskBarProps) {
               Needs you
             </Button>
           )}
+          {!task.actedAlone && task.state !== 'waiting' && (
+            <span className="ml-auto shrink-0 text-xs font-normal opacity-70 tabular-nums">{cost}</span>
+          )}
           {task.actedAlone && task.state !== 'waiting' && (
             <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-md bg-background px-2 py-0.5 text-xs text-earned">
               <CheckIcon className="size-3" />
@@ -69,7 +76,11 @@ export function TaskBar({ task, now, left, width, onFlag }: TaskBarProps) {
       </TooltipTrigger>
       <TooltipContent side="bottom" align="end" className="flex-col items-start gap-1 px-3 py-2">
         <span className="text-background/70 tabular-nums">
-          {AGENT_BY_ID[task.agent].name} · {STATE_NAME[task.state]} · {formatMinutes(elapsed(task, now))}
+          {agent.name} · {STATE_NAME[task.state]} · {formatMinutes(elapsed(task, now))} · {cost}
+        </span>
+        <span className="text-background/70 tabular-nums">
+          {Math.round(task.inputTokens).toLocaleString()} tokens in · {Math.round(task.outputTokens).toLocaleString()} out
+          {taskEstimated(task) && ' · estimate'}
         </span>
         <ul className="flex list-disc flex-col gap-0.5 pl-4 text-sm">
           {lines.map((l) => (

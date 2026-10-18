@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "name": "Pricing page refresh",
+  "request": "Refresh our pricing page from what competitors charge. Let me OK anything before it goes live.",
+  "agents": [
+    {
+      "id": "researcher",
+      "name": "Researcher",
+      "provider": "anthropic",
+      "model": "claude-opus-5-5",
+      "effort": "medium",
+      "tools": [
+        "google",
+        "notion"
+      ]
+    },
+    {
+      "id": "writer",
+      "name": "Writer",
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "effort": "medium",
+      "tools": [
+        "figma",
+        "notion"
+      ]
+    },
+    {
+      "id": "reviewer",
+      "name": "Reviewer",
+      "provider": "openai",
+      "model": "gpt-6-sol",
+      "effort": "medium",
+      "tools": [
+        "notion",
+        "slack"
+      ]
+    },
+    {
+      "id": "ops",
+      "name": "Ops",
+      "provider": "google",
+      "model": "gemini-3.8-flash",
+      "effort": "low",
+      "tools": [
+        "stripe",
+        "github"
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "id": "competitor-pricing",
+      "agent": "researcher",
+      "task": "Competitor pricing",
+      "stage": 0,
+      "approval": "never",
+      "prompt": "Find the current prices of the 9 competitors in our Notion list “Competitors”.\n\nFor each plan, write down the plan name, the monthly price, and what is included. Put it all in the Notion table “Competitor pricing”.\n\nFlag anything that changed since last month."
+    },
+    {
+      "id": "draft-page",
+      "agent": "writer",
+      "task": "Draft pricing page",
+      "stage": 1,
+      "approval": "never",
+      "prompt": "Using the “Competitor pricing” table, draft our new pricing page: a headline, three plan cards and a short FAQ.\n\nKeep our current prices. Write plainly, no hype. Match the layout of the Figma frame “Pricing / v3”."
+    },
+    {
+      "id": "customer-quotes",
+      "agent": "researcher",
+      "task": "Customer quotes",
+      "stage": 1,
+      "approval": "never",
+      "tools": [
+        "notion",
+        "slack"
+      ],
+      "prompt": "Read the last 14 customer interview notes in Notion. Pull out short quotes about price and value, and group them by theme so the Writer can use them on the page."
+    },
+    {
+      "id": "review-publish",
+      "agent": "reviewer",
+      "task": "Review and publish",
+      "stage": 2,
+      "approval": "earned",
+      "asks": "wants to publish the pricing page",
+      "prompt": "Check every price on the draft against the “Competitor pricing” table and our own price list. Fix typos.\n\nWhen it is right, publish the page and post a two-line summary in #launches on Slack."
+    }
+  ]
+}

@@ -13,8 +13,9 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { AGENT_BY_ID, APPROVAL_LABEL, TOOLS } from '@/lib/catalog'
-import { useFlow } from '@/lib/store'
+import { APPROVAL_LABEL, toolInfo } from '@/lib/catalog'
+import { modelInfo } from '@/lib/models'
+import { useAgent, useFlow } from '@/lib/store'
 import type { Step } from '@/lib/types'
 
 export function PromptDialog() {
@@ -32,7 +33,7 @@ function PromptEditor({ step }: { step: Step }) {
   const [draft, setDraft] = useState(step.prompt)
   const savePrompt = useFlow((s) => s.savePrompt)
   const openPrompt = useFlow((s) => s.openPrompt)
-  const agent = AGENT_BY_ID[step.agent]
+  const agent = useAgent(step.agent)
 
   const save = () => {
     const next = draft.trim()
@@ -47,7 +48,7 @@ function PromptEditor({ step }: { step: Step }) {
         <div className="flex flex-col gap-0.5">
           <DialogTitle>{step.task || 'Untitled step'}</DialogTitle>
           <DialogDescription>
-            {agent.name} · {agent.model}
+            {agent.name} · {modelInfo(agent.model, agent.provider).label} · {agent.effort} effort
           </DialogDescription>
         </div>
       </DialogHeader>
@@ -68,7 +69,7 @@ function PromptEditor({ step }: { step: Step }) {
           <dt className="w-28 shrink-0 text-muted-foreground">Can use</dt>
           <dd className="flex items-center gap-2">
             <ToolIcons tools={step.tools} />
-            {step.tools.map((t) => TOOLS[t].name).join(', ')}
+            {step.tools.map((t) => toolInfo(t).name).join(', ') || 'No tools'}
           </dd>
         </div>
         <div className="flex items-center gap-4">

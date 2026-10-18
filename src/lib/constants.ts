@@ -1,9 +1,14 @@
-/** How many simulated minutes the timeline shows. */
-export const WINDOW_MINUTES = 30
+/** How many minutes the timeline shows: simulated runs are compressed, real runs are short. */
+export const WINDOW_MINUTES = { simulated: 30, real: 5 } as const
 /** Gridline labels on the timeline, in minutes before now. */
-export const TIMELINE_TICKS = [25, 20, 15, 10, 5]
+export const TIMELINE_TICKS = { simulated: [25, 20, 15, 10, 5], real: [4, 3, 2, 1] } as const
 /** Simulated minutes that pass per real second. A whole flow plays in about 15 seconds. */
 export const SIM_MINUTES_PER_SECOND = 1.4
+/** Real runs move the clock at real speed. */
+export const REAL_MINUTES_PER_SECOND = 1 / 60
+/** Tokens a simulated step uses per simulated minute, for cost estimates. */
+export const SIM_INPUT_TOKENS_PER_MINUTE = 9_000
+export const SIM_OUTPUT_TOKENS_PER_MINUTE = 900
 /** Ignore long frame gaps (a hidden tab) so time doesn't jump. */
 export const MAX_FRAME_SECONDS = 0.1
 /** Pause between one stage finishing and the next starting, in simulated minutes. */

@@ -1,9 +1,9 @@
 import { cva, type VariantProps } from 'class-variance-authority'
-import { AGENT_BY_ID } from '@/lib/catalog'
-import type { AgentId, Vendor } from '@/lib/types'
+import { useAgent } from '@/lib/store'
+import type { Provider } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
-const MARK: Record<Vendor, { glyph: string; className: string }> = {
+const MARK: Record<Provider, { glyph: string; className: string }> = {
   anthropic: { glyph: '✳', className: 'text-vendor-anthropic' },
   openai: { glyph: '◎', className: 'text-vendor-openai' },
   google: { glyph: '✦', className: 'text-vendor-google' },
@@ -23,8 +23,8 @@ export function AgentAvatar({
   agent,
   size,
   className,
-}: { agent: AgentId; className?: string } & VariantProps<typeof avatarVariants>) {
-  const mark = MARK[AGENT_BY_ID[agent].vendor]
+}: { agent: string; className?: string } & VariantProps<typeof avatarVariants>) {
+  const mark = MARK[useAgent(agent).provider]
   return (
     <span aria-hidden className={cn(avatarVariants({ size }), mark.className, className)}>
       {mark.glyph}

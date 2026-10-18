@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "name": "Lumen landing page",
+  "request": "Make a simple landing page for Lumen from the brief, and let me OK it before anything is saved to the site.",
+  "agents": [
+    { "id": "researcher", "name": "Researcher", "provider": "anthropic", "model": "claude-haiku-5-5", "effort": "low", "tools": ["files"] },
+    { "id": "writer", "name": "Writer", "provider": "anthropic", "model": "claude-sonnet-5-5", "effort": "medium", "tools": ["files"] },
+    { "id": "reviewer", "name": "Reviewer", "provider": "anthropic", "model": "claude-haiku-5-5", "effort": "low", "tools": ["files"] }
+  ],
+  "steps": [
+    {
+      "id": "read-brief",
+      "agent": "researcher",
+      "task": "Read the brief",
+      "stage": 0,
+      "prompt": "Read brief.md. Write notes.md with three short sections: who Lumen is for, the three strongest benefits in plain words, and words to use and to avoid."
+    },
+    {
+      "id": "write-page",
+      "agent": "writer",
+      "task": "Write the landing page",
+      "stage": 1,
+      "approval": "always",
+      "asks": "wants to save the landing page to site/index.html",
+      "prompt": "Using brief.md and notes.md, write site/index.html: one self-contained HTML page with inline CSS. Include a headline, the three benefits, the price, and a single \"Get Lumen\" button. Calm and plain, no hype. Keep it under 150 lines."
+    },
+    {
+      "id": "write-faq",
+      "agent": "researcher",
+      "task": "Draft a short FAQ",
+      "stage": 1,
+      "prompt": "Read brief.md and write faq.md with four questions a first-time visitor would ask about Lumen, each answered in one or two sentences. Only use facts from the brief."
+    },
+    {
+      "id": "review-page",
+      "agent": "reviewer",
+      "task": "Review the page",
+      "stage": 2,
+      "prompt": "Read brief.md and site/index.html. Check that the price, the tone and the call to action match the brief. Write review.md as a short pass/fail checklist with one line of advice for anything that fails."
+    }
+  ]
+}

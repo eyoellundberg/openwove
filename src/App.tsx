@@ -19,6 +19,11 @@ export default function App() {
   const frame = useFlow((s) => s.frame)
   const waiting = useFlow((s) => s.tasks.filter((t) => t.state === 'waiting').length)
   const colorMode = useColorMode()
+  const checkRunner = useFlow((s) => s.checkRunner)
+
+  useEffect(() => {
+    checkRunner()
+  }, [checkRunner])
 
   useAnimationFrame(frame)
   useEffect(() => {

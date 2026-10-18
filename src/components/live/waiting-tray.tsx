@@ -1,6 +1,6 @@
 import { AgentAvatar } from '@/components/shared/agent-avatar'
 import { Button } from '@/components/ui/button'
-import { AGENT_BY_ID } from '@/lib/catalog'
+import { findAgent } from '@/lib/catalog'
 import { EARN_AFTER } from '@/lib/constants'
 import { formatMinutes } from '@/lib/status'
 import { useFlow } from '@/lib/store'
@@ -11,6 +11,7 @@ export function WaitingTray({ flashId }: { flashId: string | null }) {
   const tasks = useFlow((s) => s.tasks)
   const steps = useFlow((s) => s.steps)
   const decide = useFlow((s) => s.decide)
+  const agents = useFlow((s) => s.agents)
   const waiting = tasks.filter((t) => t.state === 'waiting')
 
   return (
@@ -36,7 +37,7 @@ export function WaitingTray({ flashId }: { flashId: string | null }) {
             <AgentAvatar agent={t.agent} size="sm" />
             <div className="min-w-0 flex-1">
               <p>
-                <span className="font-semibold">{AGENT_BY_ID[t.agent].name}</span> {t.gateText}
+                <span className="font-semibold">{findAgent(agents, t.agent).name}</span> {t.gateText}
               </p>
               <p className="text-xs text-muted-foreground tabular-nums">
                 {t.label} · waiting {formatMinutes(now - (t.waitingSince ?? now))}

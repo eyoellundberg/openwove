@@ -1,3 +1,5 @@
+import { taskCost, taskEstimated } from './engine'
+import { formatCost } from './models'
 import type { Task, TaskState } from './types'
 
 export const formatMinutes = (m: number) => (m < 1 ? '<1m' : `${Math.floor(m)}m`)
@@ -24,7 +26,7 @@ export function stepStatusLine(t: Task | undefined, now: number): string {
     case 'running':
       return `Running · ${formatMinutes(elapsed(t, now))}${t.actedAlone ? ' · went ahead on its own' : ''}`
     case 'done':
-      return `Done in ${formatMinutes(elapsed(t, now))}${t.actedAlone ? ' · didn’t need to ask' : ''}`
+      return `Done in ${formatMinutes(elapsed(t, now))} · ${formatCost(taskCost(t), taskEstimated(t))}${t.actedAlone ? ' · didn’t need to ask' : ''}`
     case 'skipped':
       return 'Skipped: an earlier step didn’t finish'
     default:
@@ -34,7 +36,7 @@ export function stepStatusLine(t: Task | undefined, now: number): string {
 
 /** What the agent has reported so far, newest last. */
 export function progressLog(t: Task): string[] {
-  if (t.state === 'done') return t.log
+  if (t.live || t.state === 'done') return t.log
   const shown = Math.max(1, Math.ceil((t.worked / t.minutes) * t.log.length))
   return t.log.slice(0, shown)
 }

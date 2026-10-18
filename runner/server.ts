@@ -1,15 +1,11 @@
 /** The local runner: `npm run runner`. The app reaches it through Vite's /api proxy. */
-import { existsSync, mkdirSync, readdirSync, readFileSync } from 'node:fs'
+import { existsSync, mkdirSync } from 'node:fs'
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
-import { basename, join, resolve } from 'node:path'
+import { join } from 'node:path'
 import Anthropic from '@anthropic-ai/sdk'
 import { parseFlow } from '../src/lib/flow-file'
+import { listFlows, readFlow, ROOT, RUNNER_PORT as PORT, saveFlow, WORKSPACE } from './flows'
 import { Run } from './run'
-
-const PORT = Number(process.env.RUNNER_PORT ?? 5189)
-const ROOT = resolve(import.meta.dirname, '..')
-const FLOWS = join(ROOT, 'flows')
-const WORKSPACE = join(ROOT, 'workspace')
 
 if (existsSync(join(ROOT, '.env.local'))) process.loadEnvFile(join(ROOT, '.env.local'))
 mkdirSync(WORKSPACE, { recursive: true })
@@ -18,6 +14,10 @@ const hasAnthropic = Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHRO
 const client = hasAnthropic ? new Anthropic() : null
 const runs = new Map<string, Run>()
 let runCounter = 0
+
+/** Open app windows, listening for "your agent saved a flow". */
+type AppEvent = { type: 'flow-saved'; file: string; open: boolean }
+const apps = new Set<(e: AppEvent) => void>()
 
 function send(res: ServerResponse, status: number, body: unknown) {
   res.writeHead(status, { 'Content-Type': 'application/json' })
@@ -30,20 +30,6 @@ async function readJson(req: IncomingMessage): Promise<unknown> {
   return JSON.parse(Buffer.concat(chunks).toString('utf8') || 'null')
 }
 
-function listFlows() {
-  if (!existsSync(FLOWS)) return []
-  return readdirSync(FLOWS)
-    .filter((f) => f.endsWith('.json'))
-    .map((file) => {
-      try {
-        const parsed = parseFlow(JSON.parse(readFileSync(join(FLOWS, file), 'utf8')))
-        return { file, name: parsed.ok ? parsed.flow.name : `${file} (has a problem)` }
-      } catch {
-        return { file, name: `${file} (not valid JSON)` }
-      }
-    })
-}
-
 const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', `http://localhost:${PORT}`)
   const parts = url.pathname.split('/').filter(Boolean)
@@ -54,15 +40,40 @@ const server = createServer(async (req, res) => {
         providers: { anthropic: hasAnthropic, openai: false, google: false },
         tools: ['files'],
         workspace: WORKSPACE,
+        root: ROOT,
       })
     }
 
     if (req.method === 'GET' && url.pathname === '/flows') return send(res, 200, listFlows())
 
     if (req.method === 'GET' && parts[0] === 'flows' && parts[1]) {
-      const file = join(FLOWS, basename(decodeURIComponent(parts[1])))
-      if (!existsSync(file)) return send(res, 404, { error: 'That flow file isn’t in the flows folder.' })
-      return send(res, 200, JSON.parse(readFileSync(file, 'utf8')))
+      const flow = readFlow(decodeURIComponent(parts[1]))
+      if (flow == null) return send(res, 404, { error: 'That flow file isn’t in the flows folder.' })
+      return send(res, 200, flow)
+    }
+
+    // The app saves canvas changes back, so your agent reads what you changed.
+    if (req.method === 'PUT' && parts[0] === 'flows' && parts[1]) {
+      const saved = saveFlow(await readJson(req), decodeURIComponent(parts[1]))
+      if (!saved.ok) return send(res, 400, { error: `The flow has a problem. ${saved.error}` })
+      return send(res, 200, saved)
+    }
+
+    if (req.method === 'GET' && url.pathname === '/app-events') {
+      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' })
+      res.write(': connected\n\n')
+      const write = (e: AppEvent) => res.write(`data: ${JSON.stringify(e)}\n\n`)
+      apps.add(write)
+      req.on('close', () => apps.delete(write))
+      return
+    }
+
+    // The MCP server calls this after your agent saves a flow.
+    if (req.method === 'POST' && url.pathname === '/app-events') {
+      const { file, open } = (await readJson(req)) as { file?: string; open?: boolean }
+      if (!file) return send(res, 400, { error: 'Say which flow file.' })
+      apps.forEach((write) => write({ type: 'flow-saved', file, open: open !== false }))
+      return send(res, 200, { apps: apps.size })
     }
 
     if (req.method === 'POST' && url.pathname === '/runs') {

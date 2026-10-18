@@ -9,7 +9,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "check-flow": "tsx scripts/check-flow.ts",
-    "runner": "tsx watch runner/server.ts"
+    "runner": "tsx watch runner/server.ts",
+    "mcp": "tsx runner/mcp.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",

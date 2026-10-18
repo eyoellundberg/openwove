@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { findAgent } from './catalog'
 import {
+  APP_EVENTS_RETRY_MS,
   FAST_FORWARD_RUNS,
   MAX_FRAME_SECONDS,
   REAL_MINUTES_PER_SECOND,
@@ -9,7 +10,7 @@ import {
 } from './constants'
 import { flowToState, stateToFlow } from './convert'
 import * as engine from './engine'
-import { runner, type FlowListing, type RunnerHealth } from './runner-client'
+import { runner, type AppEvent, type FlowListing, type RunnerHealth } from './runner-client'
 import { initialHistory, makeStep, SAMPLE_FLOW } from './seed'
 import type { Agent, RunMode, Step, View } from './types'
 
@@ -21,6 +22,12 @@ interface FlowStore extends engine.Sim {
   mode: RunMode
   runnerStatus: RunnerStatus
   flowFiles: FlowListing[]
+  /** The file in flows/ this flow came from, if any. */
+  file: string | null
+  /** The canvas has changes that aren't saved to the flows folder. */
+  unsaved: boolean
+  /** Your agent saved a flow while you were busy; it opens when you say so. */
+  agentSaved: string | null
   /** Something went wrong loading a flow or talking to the runner. */
   notice: string | null
   paused: boolean
@@ -45,6 +52,8 @@ interface FlowStore extends engine.Sim {
   loadFlow: (input: unknown) => Promise<boolean>
   openFlowFile: (file: string) => Promise<void>
   exportFlow: () => string
+  saveToFile: () => Promise<void>
+  openAgentSaved: (open: boolean) => void
   openPrompt: (id: string | null) => void
   savePrompt: (id: string, prompt: string) => void
   openSetup: (open: boolean) => void
@@ -65,9 +74,33 @@ const sim = (s: FlowStore): engine.Sim => ({
 })
 
 let stopListening: (() => void) | null = null
+let stopAppEvents: (() => void) | null = null
+
+/** A real run is still going, so swapping the flow out would cut it off. */
+const liveRunGoing = (s: FlowStore) =>
+  s.tasks.some((t) => t.live && t.runId === s.runId && (t.state === 'pending' || t.state === 'running' || t.state === 'waiting'))
 
 export const useFlow = create<FlowStore>()((set, get) => {
-  const editSteps = (steps: Step[]) => set({ steps, dirty: get().runId != null })
+  const editSteps = (steps: Step[]) => set({ steps, dirty: get().runId != null, unsaved: true })
+
+  const onAgentSaved = (e: AppEvent) => {
+    runner.listFlows().then((flowFiles) => set({ flowFiles })).catch(() => undefined)
+    if (!e.open) return
+    const s = get()
+    if (s.unsaved || liveRunGoing(s)) {
+      set({ agentSaved: e.file })
+      return
+    }
+    s.openFlowFile(e.file).then(() => get().setView('setup'))
+  }
+
+  // The runner restarts often (tsx watch), so reconnect quietly when it drops.
+  const listenForAgent = () => {
+    stopAppEvents ??= runner.appEvents(onAgentSaved, () => {
+      stopAppEvents = null
+      setTimeout(listenForAgent, APP_EVENTS_RETRY_MS)
+    })
+  }
   const sample = flowToState(SAMPLE_FLOW)
 
   return {
@@ -79,6 +112,9 @@ export const useFlow = create<FlowStore>()((set, get) => {
     mode: 'simulated',
     runnerStatus: { state: 'checking' },
     flowFiles: [],
+    file: null,
+    unsaved: false,
+    agentSaved: null,
     notice: null,
     paused: false,
     dirty: false,
@@ -158,6 +194,7 @@ export const useFlow = create<FlowStore>()((set, get) => {
       try {
         const [health, flowFiles] = await Promise.all([runner.health(), runner.listFlows()])
         set({ runnerStatus: { state: 'ready', health }, flowFiles })
+        listenForAgent()
       } catch {
         set({ runnerStatus: { state: 'offline' }, flowFiles: [] })
       }
@@ -174,12 +211,12 @@ export const useFlow = create<FlowStore>()((set, get) => {
       const loaded = flowToState(parsed.flow)
       stopListening?.()
       stopListening = null
-      set({ ...loaded, dirty: get().runId != null, notice: null, promptStepId: null })
+      set({ ...loaded, file: null, unsaved: false, dirty: get().runId != null, notice: null, promptStepId: null })
       return true
     },
     openFlowFile: async (file) => {
       try {
-        await get().loadFlow(await runner.getFlow(file))
+        if (await get().loadFlow(await runner.getFlow(file))) set({ file, agentSaved: null })
       } catch (error) {
         set({ notice: error instanceof Error ? error.message : 'Could not open that flow.' })
       }
@@ -187,6 +224,23 @@ export const useFlow = create<FlowStore>()((set, get) => {
     exportFlow: () => {
       const s = get()
       return JSON.stringify(stateToFlow({ name: s.name, request: s.request, agents: s.agents, steps: s.steps }), null, 2)
+    },
+
+    saveToFile: async () => {
+      const s = get()
+      const flow = stateToFlow({ name: s.name, request: s.request, agents: s.agents, steps: s.steps })
+      try {
+        const { file } = await runner.saveFlow(s.file ?? s.name, flow)
+        set({ file, unsaved: false, notice: null })
+        set({ flowFiles: await runner.listFlows() })
+      } catch (error) {
+        set({ notice: error instanceof Error ? error.message : 'Could not save to the flows folder.' })
+      }
+    },
+    openAgentSaved: (open) => {
+      const file = get().agentSaved
+      set({ agentSaved: null })
+      if (open && file) get().openFlowFile(file)
     },
 
     openPrompt: (promptStepId) => set({ promptStepId }),

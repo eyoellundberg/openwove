@@ -7,6 +7,15 @@ export interface RunnerHealth {
   providers: Record<Provider, boolean>
   tools: string[]
   workspace: string
+  /** The project folder, for the MCP setup snippet. */
+  root: string
+}
+
+/** Your agent saved a flow through the MCP server. */
+export interface AppEvent {
+  type: 'flow-saved'
+  file: string
+  open: boolean
 }
 
 export interface FlowListing {
@@ -26,6 +35,12 @@ export const runner = {
   health: () => fetch('/api/health').then((r) => json<RunnerHealth>(r)),
   listFlows: () => fetch('/api/flows').then((r) => json<FlowListing[]>(r)),
   getFlow: (file: string) => fetch(`/api/flows/${encodeURIComponent(file)}`).then((r) => json<unknown>(r)),
+  saveFlow: (file: string, flow: FlowFile) =>
+    fetch(`/api/flows/${encodeURIComponent(file)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(flow),
+    }).then((r) => json<{ file: string }>(r)),
   startRun: (flow: FlowFile, streaks: Record<string, number>) =>
     fetch('/api/runs', {
       method: 'POST',
@@ -43,6 +58,16 @@ export const runner = {
   events(runId: string, onEvent: (e: RunnerEvent) => void) {
     const source = new EventSource(`/api/runs/${runId}/events`)
     source.onmessage = (m) => onEvent(JSON.parse(m.data) as RunnerEvent)
+    return () => source.close()
+  },
+  /** Listens for flows your agent saves; `onLost` runs if the runner goes away. */
+  appEvents(onEvent: (e: AppEvent) => void, onLost: () => void) {
+    const source = new EventSource('/api/app-events')
+    source.onmessage = (m) => onEvent(JSON.parse(m.data) as AppEvent)
+    source.onerror = () => {
+      source.close()
+      onLost()
+    }
     return () => source.close()
   },
 }

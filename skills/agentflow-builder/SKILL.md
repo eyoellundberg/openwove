@@ -16,6 +16,8 @@ You write one JSON file. The person reviews it on the Agent Flow canvas, tweaks 
 5. Check it: `npm run check-flow flows/<short-name>.json`. Fix anything it reports.
 6. Tell the person, in two or three sentences, what each stage does, which steps will ask before acting, and that it's under **Flows** in the app.
 
+If the Agent Flow MCP tools are connected (`save_flow`, `get_flow`), use `save_flow` for steps 4 and 5: it checks the flow, saves it and opens it in the app. Before changing an existing flow, read it with `get_flow`; the person may have edited it on the canvas.
+
 ## The file
 
 ```json

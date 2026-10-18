@@ -4,8 +4,41 @@
     {
       "name": "agentflow",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "5188", "--strictPort"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5188",
+        "--strictPort"
+      ],
       "port": 5188
+    },
+    {
+      "name": "agentflow-alt",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "RUNNER_PORT=5199",
+        "npm",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5198",
+        "--strictPort"
+      ],
+      "port": 5198
+    },
+    {
+      "name": "runner-alt",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "RUNNER_PORT=5199",
+        "npm",
+        "run",
+        "runner"
+      ],
+      "port": 5199
     }
   ]
 }

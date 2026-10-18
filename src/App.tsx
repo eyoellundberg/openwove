@@ -1,8 +1,7 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { LiveView } from '@/components/live/live-view'
 import { PromptDialog } from '@/components/setup/prompt-dialog'
 import { SetupDialog } from '@/components/setup/setup-dialog'
-import { SetupView } from '@/components/setup/setup-view'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -10,6 +9,9 @@ import { useAnimationFrame } from '@/hooks/use-animation-frame'
 import { useColorMode } from '@/hooks/use-color-mode'
 import { useFlow } from '@/lib/store'
 import type { View } from '@/lib/types'
+
+// The canvas (React Flow) is the heaviest part, so it loads the first time Set up opens.
+const SetupView = lazy(() => import('@/components/setup/setup-view').then((m) => ({ default: m.SetupView })))
 
 export default function App() {
   const view = useFlow((s) => s.view)
@@ -51,7 +53,9 @@ export default function App() {
 
           {/* Mounted only while open, so React Flow measures the cards and fits them on arrival. */}
           <TabsContent value="setup" className="min-h-0 animate-in fade-in">
-            <SetupView />
+            <Suspense fallback={<p className="text-sm text-muted-foreground">Loading the canvas…</p>}>
+              <SetupView />
+            </Suspense>
           </TabsContent>
           <TabsContent
             value="live"

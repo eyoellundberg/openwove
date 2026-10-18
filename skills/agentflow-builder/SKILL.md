@@ -13,10 +13,10 @@ You write one JSON file. The person reviews it on the Agent Flow canvas, tweaks 
 2. Split the work into **stages**. Steps in the same stage run at the same time; a stage starts when every step in the stage before it is done. Two to five steps is typical. Don't invent work the person didn't ask for.
 3. For each step, pick an agent and write its prompt (below).
 4. Save it as `flows/<short-name>.json`.
-5. Check it: `npm run check-flow flows/<short-name>.json`. Fix anything it reports.
+5. Check it: `npm run check-flow flows/<short-name>.json`. Fix every problem it lists, and pass its notes (unknown models, tools that won't connect) on to the person.
 6. Tell the person, in two or three sentences, what each stage does, which steps will ask before acting, and that it's under **Flows** in the app.
 
-If the Agent Flow MCP tools are connected (`save_flow`, `get_flow`), use `save_flow` for steps 4 and 5: it checks the flow, saves it and opens it in the app. Before changing an existing flow, read it with `get_flow`; the person may have edited it on the canvas.
+If the Agent Flow MCP tools are connected (`save_flow`, `get_flow`), use `save_flow` for steps 4 and 5: it checks the flow against the schema, saves it, opens it in the app, and returns the same notes. Before changing an existing flow, read it with `get_flow`; the person may have edited it on the canvas.
 
 ## The file
 

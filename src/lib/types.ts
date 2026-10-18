@@ -1,7 +1,6 @@
-import type { APPROVALS, EFFORTS, PROVIDERS } from './flow-file'
+import type { APPROVALS, FlowAgent, PROVIDERS } from './flow-file'
 
 export type Provider = (typeof PROVIDERS)[number]
-export type Effort = (typeof EFFORTS)[number]
 
 /** What a step does before it takes its final action. */
 export type Approval = (typeof APPROVALS)[number]
@@ -12,15 +11,7 @@ export type StepMode = 'after' | 'with'
 /** Simulated runs play back made-up work; real runs call models through the local runner. */
 export type RunMode = 'simulated' | 'real'
 
-export interface Agent {
-  id: string
-  name: string
-  provider: Provider
-  /** The provider's model id, e.g. "claude-sonnet-5-5". */
-  model: string
-  effort: Effort
-  tools: string[]
-}
+export type Agent = FlowAgent
 
 export interface Step {
   id: string

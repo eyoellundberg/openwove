@@ -8,6 +8,7 @@ import { join } from 'node:path'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
+import { FlowFileSchema } from '../src/lib/flow-file'
 import { listFlows, readFlow, ROOT, RUNNER_PORT, saveFlow, WORKSPACE } from './flows'
 
 /** The builder skill, without its frontmatter, plus how it works over this connection. */
@@ -108,7 +109,7 @@ server.registerTool(
     description:
       'Check a flow and save it to the flows folder, then show it in the Agent Flow app. If it has a problem, nothing is saved and you get what to fix.',
     inputSchema: {
-      flow: z.record(z.string(), z.unknown()).describe('The flow file as JSON. See get_guide for the format.'),
+      flow: FlowFileSchema.describe('The flow. See get_guide for how to split work into stages and pick models.'),
       file: z
         .string()
         .optional()
@@ -118,8 +119,9 @@ server.registerTool(
   },
   async ({ flow, file, open }) => {
     const saved = saveFlow(flow, file)
-    if (!saved.ok) return text(`Not saved. ${saved.error}`, true)
-    return text(`Saved flows/${saved.file}. ${await showInApp(saved.file, open !== false)}`)
+    if (!saved.ok) return text(`Not saved. Fix these and save again:\n${saved.error}`, true)
+    const notes = saved.warnings.map((w) => `\nNote: ${w}`).join('')
+    return text(`Saved flows/${saved.file}. ${await showInApp(saved.file, open !== false)}${notes}`)
   },
 )
 

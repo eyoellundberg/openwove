@@ -138,7 +138,7 @@ export const useFlow = create<FlowStore>()((set, get) => {
         return
       }
       const previous = s.runId
-      const flow = stateToFlow({ name: s.name, request: s.request, agents: s.agents, steps: s.steps })
+      const flow = stateToFlow(s)
       const streaks = Object.fromEntries(s.steps.map((step) => [step.id, step.streak]))
       try {
         const { runId } = await runner.startRun(flow, streaks)
@@ -221,16 +221,12 @@ export const useFlow = create<FlowStore>()((set, get) => {
         set({ notice: error instanceof Error ? error.message : 'Could not open that flow.' })
       }
     },
-    exportFlow: () => {
-      const s = get()
-      return JSON.stringify(stateToFlow({ name: s.name, request: s.request, agents: s.agents, steps: s.steps }), null, 2)
-    },
+    exportFlow: () => JSON.stringify(stateToFlow(get()), null, 2),
 
     saveToFile: async () => {
       const s = get()
-      const flow = stateToFlow({ name: s.name, request: s.request, agents: s.agents, steps: s.steps })
       try {
-        const { file } = await runner.saveFlow(s.file ?? s.name, flow)
+        const { file } = await runner.saveFlow(s.file ?? s.name, stateToFlow(s))
         set({ file, unsaved: false, notice: null })
         set({ flowFiles: await runner.listFlows() })
       } catch (error) {

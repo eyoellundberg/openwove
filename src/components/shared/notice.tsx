@@ -13,7 +13,7 @@ export function Notice() {
       className="flex items-center gap-2 rounded-lg bg-failed-subtle px-3 py-2 text-sm text-failed animate-in fade-in slide-in-from-top-1"
     >
       <TriangleAlertIcon className="size-4 shrink-0" />
-      <span className="min-w-0 flex-1">{notice}</span>
+      <span className="min-w-0 flex-1 whitespace-pre-line">{notice}</span>
       <Button variant="ghost" size="icon-sm" onClick={dismiss} aria-label="Dismiss">
         <XIcon />
       </Button>

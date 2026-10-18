@@ -1,6 +1,7 @@
 /** Check a flow file: `npm run check-flow flows/my-flow.json`. Exits non-zero with a readable error. */
 import { readFileSync } from 'node:fs'
 import { parseFlow } from '../src/lib/flow-file'
+import { flowWarnings } from '../runner/flows'
 
 const path = process.argv[2]
 if (!path) {
@@ -18,8 +19,9 @@ try {
 
 const result = parseFlow(json)
 if (!result.ok) {
-  console.error(`${path}: ${result.error}`)
+  console.error(`${path} has problems:\n${result.error}`)
   process.exit(1)
 }
 const stages = new Set(result.flow.steps.map((s) => s.stage)).size
 console.log(`${path} is valid: "${result.flow.name}", ${result.flow.steps.length} steps in ${stages} stages.`)
+for (const warning of flowWarnings(result.flow)) console.log(`Note: ${warning}`)

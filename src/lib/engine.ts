@@ -23,7 +23,10 @@ export interface Sim {
 
 const FINISHED: TaskState[] = ['done', 'denied', 'failed', 'stopped', 'skipped']
 const BROKEN: TaskState[] = ['denied', 'failed', 'stopped', 'skipped']
-export const isFinished = (t: Task) => FINISHED.includes(t.state)
+const ACTIVE: TaskState[] = ['pending', 'running', 'waiting']
+const isFinished = (t: Task) => FINISHED.includes(t.state)
+/** Still has work to do, or is waiting on you. */
+export const isActive = (t: Task) => ACTIVE.includes(t.state)
 
 /** How often an "earned" step still asks, after `streak` approvals in a row. */
 export const askChance = (streak: number) =>
@@ -92,7 +95,7 @@ export const newRunId = () => `run-${Date.now().toString(36)}-${++runCounter}`
 /** Stop whatever the current run is doing and queue a fresh run of the flow. */
 export function startRun(sim: Sim, options: { live?: boolean; runId?: string } = {}): Sim {
   const tasks = sim.tasks.map((t): Task =>
-    t.runId === sim.runId && (t.state === 'running' || t.state === 'waiting' || t.state === 'pending')
+    t.runId === sim.runId && isActive(t)
       ? { ...t, state: t.start == null ? 'skipped' : 'stopped', end: t.start == null ? null : sim.simT }
       : t,
   )
@@ -210,6 +213,9 @@ export type RunnerEvent =
   | { type: 'step_failed'; stepId: string; error: string }
   | { type: 'step_skipped'; stepId: string }
   | { type: 'run_done' }
+
+/** After one of these, a step does nothing more. */
+export const FINAL_EVENTS = new Set<RunnerEvent['type']>(['step_done', 'step_denied', 'step_failed', 'step_skipped', 'step_stopped'])
 
 export function applyRunnerEvent(sim: Sim, runId: string, e: RunnerEvent): Sim {
   if (runId !== sim.runId || e.type === 'run_done') return sim

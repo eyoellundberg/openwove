@@ -1,3 +1,4 @@
+import { findAgent } from './catalog'
 import { toStages } from './engine'
 import type { FlowFile } from './flow-file'
 import { defaultPrompt, makeStep, SAMPLE_PLAYBACK } from './seed'
@@ -15,7 +16,7 @@ export function flowToState(flow: FlowFile): LoadedFlow {
   const agents: Agent[] = flow.agents.map((a) => ({ ...a }))
   const byStage = [...flow.steps].sort((a, b) => a.stage - b.stage)
   const steps = byStage.map((s, i) => {
-    const agent = agents.find((a) => a.id === s.agent)!
+    const agent = findAgent(agents, s.agent)
     const playback = SAMPLE_PLAYBACK[s.id]
     return makeStep(agent, {
       id: s.id,

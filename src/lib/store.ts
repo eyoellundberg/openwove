@@ -12,11 +12,11 @@ import {
 import { flowToState, stateToFlow } from './convert'
 import * as engine from './engine'
 import type { RunSummary } from './usage'
-import { runner, type AppEvent, type FlowListing, type ProviderStatus, type Resolution, type RunnerHealth } from './runner-client'
+import { runner, type AppEvent, type FlowListing, type ProviderStatus, type Resolution } from './runner-client'
+import type { RunnerStatus } from './runner-status'
 import { initialHistory, makeStep, SAMPLE_FLOW } from './seed'
+import { readStored, writeStored } from './storage'
 import type { Agent, RunMode, Step, View } from './types'
-
-export type RunnerStatus = { state: 'checking' } | { state: 'offline' } | { state: 'ready'; health: RunnerHealth }
 
 interface FlowStore extends engine.Sim {
   name: string
@@ -79,22 +79,10 @@ interface FlowStore extends engine.Sim {
 }
 
 const MODE_KEY = 'agent-flow-default-mode'
-const savedMode = (): RunMode => {
-  try {
-    return localStorage.getItem(MODE_KEY) === 'real' ? 'real' : 'simulated'
-  } catch {
-    return 'simulated'
-  }
-}
+const savedMode = (): RunMode => (readStored('local', MODE_KEY) === 'real' ? 'real' : 'simulated')
 
 const VIEW_KEY = 'agent-flow-view'
-const savedView = (): View => {
-  try {
-    return localStorage.getItem(VIEW_KEY) === 'setup' ? 'setup' : 'live'
-  } catch {
-    return 'live'
-  }
-}
+const savedView = (): View => (readStored('local', VIEW_KEY) === 'setup' ? 'setup' : 'live')
 
 /** The real run this tab started, so a reload can rejoin it. */
 const RUN_KEY = 'agent-flow-run'
@@ -105,19 +93,12 @@ interface SavedRun {
 }
 const readSavedRun = (): SavedRun | null => {
   try {
-    return JSON.parse(sessionStorage.getItem(RUN_KEY) ?? 'null') as SavedRun | null
+    return JSON.parse(readStored('session', RUN_KEY) ?? 'null') as SavedRun | null
   } catch {
     return null
   }
 }
-const writeSavedRun = (run: SavedRun | null) => {
-  try {
-    if (run) sessionStorage.setItem(RUN_KEY, JSON.stringify(run))
-    else sessionStorage.removeItem(RUN_KEY)
-  } catch {
-    // Storage can be unavailable; the run still goes on, it just can't be rejoined.
-  }
-}
+const writeSavedRun = (run: SavedRun | null) => writeStored('session', RUN_KEY, run && JSON.stringify(run))
 
 const sim = (s: FlowStore): engine.Sim => ({
   simT: s.simT, tasks: s.tasks, steps: s.steps, agents: s.agents, runs: s.runs, runId: s.runId, runRecorded: s.runRecorded,
@@ -131,8 +112,7 @@ let frameSeconds = 0
 let stopAppEvents: (() => void) | null = null
 
 /** A real run is still going, so swapping the flow out would cut it off. */
-const liveRunGoing = (s: FlowStore) =>
-  s.tasks.some((t) => t.live && t.runId === s.runId && (t.state === 'pending' || t.state === 'running' || t.state === 'waiting'))
+const liveRunGoing = (s: FlowStore) => s.tasks.some((t) => t.live && t.runId === s.runId && engine.isActive(t))
 
 export const useFlow = create<FlowStore>()((set, get) => {
   const editSteps = (steps: Step[]) => set({ steps, dirty: get().runId != null, unsaved: true })
@@ -289,11 +269,7 @@ export const useFlow = create<FlowStore>()((set, get) => {
     },
 
     setView: (view) => {
-      try {
-        localStorage.setItem(VIEW_KEY, view)
-      } catch {
-        // Storage can be unavailable; the view still switches.
-      }
+      writeStored('local', VIEW_KEY, view)
       set({ view })
     },
     setMode: (mode) => {
@@ -359,11 +335,7 @@ export const useFlow = create<FlowStore>()((set, get) => {
     openSetup: (setupOpen) => set({ setupOpen }),
     openSettings: (settingsOpen) => set({ settingsOpen }),
     setDefaultMode: (mode) => {
-      try {
-        localStorage.setItem(MODE_KEY, mode)
-      } catch {
-        // Storage can be unavailable; the mode still changes for this visit.
-      }
+      writeStored('local', MODE_KEY, mode)
       set({ defaultMode: mode })
       get().setMode(mode)
     },

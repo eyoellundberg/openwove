@@ -3,6 +3,7 @@ import { existsSync, mkdirSync } from 'node:fs'
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import { join } from 'node:path'
 import Anthropic from '@anthropic-ai/sdk'
+import { RUNNABLE_TOOLS } from '../src/lib/catalog'
 import { parseFlow } from '../src/lib/flow-file'
 import { listFlows, readFlow, ROOT, RUNNER_PORT as PORT, saveFlow, WORKSPACE } from './flows'
 import { type AppEvent, RESOLUTIONS, type Resolution, type RunnerHealth } from '../src/lib/runner-types'
@@ -29,6 +30,13 @@ function send(res: ServerResponse, status: number, body: unknown) {
   res.end(JSON.stringify(body))
 }
 
+/** Starts a server-sent event stream. An event with an id lets a reconnecting browser pick up where it left off. */
+function openEventStream(res: ServerResponse) {
+  res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' })
+  res.write(': connected\n\n')
+  return (e: unknown, id?: number) => res.write(`${id == null ? '' : `id: ${id}\n`}data: ${JSON.stringify(e)}\n\n`)
+}
+
 async function readJson(req: IncomingMessage): Promise<unknown> {
   const chunks: Buffer[] = []
   for await (const chunk of req) chunks.push(chunk as Buffer)
@@ -43,7 +51,7 @@ const server = createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/health') {
       const health: RunnerHealth = {
         providers: { anthropic: hasAnthropic, openai: false, google: false },
-        tools: ['files'],
+        tools: [...RUNNABLE_TOOLS],
         workspace: WORKSPACE,
         root: ROOT,
       }
@@ -68,9 +76,7 @@ const server = createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && url.pathname === '/app-events') {
-      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' })
-      res.write(': connected\n\n')
-      const write = (e: AppEvent) => res.write(`data: ${JSON.stringify(e)}\n\n`)
+      const write: (e: AppEvent) => void = openEventStream(res)
       apps.add(write)
       req.on('close', () => apps.delete(write))
       return
@@ -108,8 +114,8 @@ const server = createServer(async (req, res) => {
       const old = stored.get(parts[1])
       if (old && req.method === 'GET' && parts[2] === 'events') {
         // A finished run replays what happened. The stream stays open, like a live one, so the browser doesn't keep reconnecting.
-        res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' })
-        old.events.forEach((e) => res.write(`data: ${JSON.stringify(e)}\n\n`))
+        const write = openEventStream(res)
+        old.events.forEach((e) => write(e))
         return
       }
       if (old) return send(res, 409, { error: 'That run has ended.' })
@@ -117,10 +123,9 @@ const server = createServer(async (req, res) => {
     }
 
     if (run && req.method === 'GET' && parts[2] === 'events') {
-      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' })
       // Each event carries its index, so a reconnecting EventSource gets only what it missed.
       // Replaying everything would add step_usage tokens and step_log lines twice.
-      const write = (e: unknown, i: number) => res.write(`id: ${i}\ndata: ${JSON.stringify(e)}\n\n`)
+      const write = openEventStream(res)
       const from = Number(req.headers['last-event-id'] ?? -1) + 1
       run.events.slice(from).forEach((e, i) => write(e, from + i))
       const unsubscribe = run.subscribe((e) => write(e, run.events.length - 1))

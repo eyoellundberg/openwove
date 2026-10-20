@@ -1,5 +1,6 @@
 /** Runs one flow for real: stage by stage, one Claude tool loop per step, pausing at approvals. */
 import Anthropic from '@anthropic-ai/sdk'
+import { findAgent, RUNNABLE_TOOLS } from '../src/lib/catalog'
 import { askChance, type RunnerEvent } from '../src/lib/engine'
 import type { FlowAgent, FlowFile, FlowStep } from '../src/lib/flow-file'
 import type { Resolution } from '../src/lib/runner-types'
@@ -105,7 +106,7 @@ export class Run {
 
   /** Returns false when the step failed or was denied, which stops later stages. */
   private async runStep(step: FlowStep): Promise<boolean> {
-    const agent = this.flow.agents.find((a) => a.id === step.agent)!
+    const agent = findAgent(this.flow.agents, step.agent)
     this.emit({ type: 'step_started', stepId: step.id })
 
     if (agent.provider !== 'anthropic') {
@@ -114,7 +115,7 @@ export class Run {
     }
 
     const wanted = step.tools ?? agent.tools
-    const missing = wanted.filter((t) => t !== 'files')
+    const missing = wanted.filter((t) => !RUNNABLE_TOOLS.has(t))
     if (missing.length) this.emit({ type: 'step_log', stepId: step.id, text: `Not connected, skipped: ${missing.join(', ')}` })
 
     for (let attempt = 1; ; attempt++) {

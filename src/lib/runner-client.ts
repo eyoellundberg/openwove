@@ -6,46 +6,32 @@ import type { RunSummary } from './usage'
 
 export type { AppEvent, FlowListing, ProviderStatus, Resolution, RunnerHealth } from './runner-types'
 
-async function json<T>(res: Response): Promise<T> {
+async function request<T>(method: 'GET' | 'POST' | 'PUT', path: string, body?: unknown): Promise<T> {
+  const res = await fetch(`/api${path}`, {
+    method,
+    ...(body === undefined ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
+  })
   if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as { error?: string } | null
-    throw new Error(body?.error ?? `The runner answered ${res.status}.`)
+    const error = (await res.json().catch(() => null)) as { error?: string } | null
+    throw new Error(error?.error ?? `The runner answered ${res.status}.`)
   }
   return res.json() as Promise<T>
 }
+const get = <T>(path: string) => request<T>('GET', path)
+const post = <T>(path: string, body?: unknown) => request<T>('POST', path, body)
 
 export const runner = {
-  health: () => fetch('/api/health').then((r) => json<RunnerHealth>(r)),
-  listFlows: () => fetch('/api/flows').then((r) => json<FlowListing[]>(r)),
-  getFlow: (file: string) => fetch(`/api/flows/${encodeURIComponent(file)}`).then((r) => json<unknown>(r)),
-  saveFlow: (file: string, flow: FlowFile) =>
-    fetch(`/api/flows/${encodeURIComponent(file)}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(flow),
-    }).then((r) => json<{ file: string }>(r)),
-  startRun: (flow: FlowFile, streaks: Record<string, number>) =>
-    fetch('/api/runs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ flow, streaks }),
-    }).then((r) => json<{ runId: string }>(r)),
-  decide: (runId: string, stepId: string, approve: boolean) =>
-    fetch(`/api/runs/${runId}/decide`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stepId, approve }),
-    }).then((r) => json<{ ok: true }>(r)),
-  resolve: (runId: string, stepId: string, action: Resolution) =>
-    fetch(`/api/runs/${runId}/resolve`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stepId, action }),
-    }).then((r) => json<{ ok: true }>(r)),
+  health: () => get<RunnerHealth>('/health'),
+  listFlows: () => get<FlowListing[]>('/flows'),
+  getFlow: (file: string) => get<unknown>(`/flows/${encodeURIComponent(file)}`),
+  saveFlow: (file: string, flow: FlowFile) => request<{ file: string }>('PUT', `/flows/${encodeURIComponent(file)}`, flow),
+  startRun: (flow: FlowFile, streaks: Record<string, number>) => post<{ runId: string }>('/runs', { flow, streaks }),
+  decide: (runId: string, stepId: string, approve: boolean) => post<{ ok: true }>(`/runs/${runId}/decide`, { stepId, approve }),
+  resolve: (runId: string, stepId: string, action: Resolution) => post<{ ok: true }>(`/runs/${runId}/resolve`, { stepId, action }),
   /** What every saved run cost, newest first. */
-  runs: () => fetch('/api/runs').then((r) => json<RunSummary[]>(r)),
-  status: () => fetch('/api/status').then((r) => json<{ anthropic: ProviderStatus }>(r)).then((s) => s.anthropic),
-  stop: (runId: string) => fetch(`/api/runs/${runId}/stop`, { method: 'POST' }).then((r) => json<{ ok: true }>(r)),
+  runs: () => get<RunSummary[]>('/runs'),
+  status: () => get<{ anthropic: ProviderStatus }>('/status').then((s) => s.anthropic),
+  stop: (runId: string) => post<{ ok: true }>(`/runs/${runId}/stop`),
   /** Whether the runner still knows a run. It forgets them when it restarts. */
   async knowsRun(runId: string): Promise<boolean> {
     const controller = new AbortController()

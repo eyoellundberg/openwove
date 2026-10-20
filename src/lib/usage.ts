@@ -1,4 +1,5 @@
 /** What a saved run adds up to. Pure, so the runner and the app read runs the same way. */
+import { findAgent } from './catalog'
 import type { RunnerEvent } from './engine'
 import type { FlowFile } from './flow-file'
 import { costOf, modelInfo } from './models'
@@ -50,8 +51,8 @@ function statusOf(run: StoredRun): RunStatus {
 
 export function summarize(run: StoredRun): RunSummary {
   const steps = run.flow.steps.map((step): StepUsage => {
-    const agent = run.flow.agents.find((a) => a.id === step.agent)
-    const model = agent?.model ?? ''
+    const agent = findAgent(run.flow.agents, step.agent)
+    const model = agent.model
     let inputTokens = 0
     let outputTokens = 0
     for (const e of run.events) {
@@ -63,7 +64,7 @@ export function summarize(run: StoredRun): RunSummary {
     return {
       stepId: step.id,
       task: step.task,
-      agent: agent?.name ?? step.agent,
+      agent: agent.name,
       model,
       inputTokens,
       outputTokens,

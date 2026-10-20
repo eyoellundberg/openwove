@@ -1,16 +1,19 @@
 import { ArrowRightIcon, CheckIcon, CopyIcon, FolderLockIcon, KeyRoundIcon, MonitorIcon } from 'lucide-react'
-import { useEffect, useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Logo } from '@/components/shared/logo'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { useColorMode } from '@/hooks/use-color-mode'
+import { useApplyColorMode } from '@/hooks/use-color-mode'
+import { useCopy } from '@/hooks/use-copy'
+import { mcpSnippets } from '@/lib/mcp-snippets'
 import { cn } from '@/lib/utils'
 import { CanvasPreview, PromptPreview, Tag, TimelinePreview, WaitingPreview } from './previews'
 
 const REPO = 'https://github.com/eyoellundberg/openwove'
-const MCP_COMMAND = 'claude mcp add openwove -- npx tsx /path/to/OpenWove/runner/mcp.ts'
+const MCP_COMMAND = mcpSnippets().claudeCode
+/** The same command, broken after the `--` so it fits the card. */
+const MCP_COMMAND_SHOWN = MCP_COMMAND.replace(' -- ', ' -- \\\n  ')
 const INSTALL = [`git clone ${REPO}.git OpenWove`, 'cd OpenWove', 'npm install', 'npm run dev'].join('\n')
-const COPIED_MS = 1500
 
 const NAV = [
   { href: '#features', label: 'Features' },
@@ -19,10 +22,7 @@ const NAV = [
 ]
 
 export function Landing() {
-  const colorMode = useColorMode()
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', colorMode === 'dark')
-  }, [colorMode])
+  useApplyColorMode()
 
   return (
     <div className="min-h-svh bg-background text-foreground">
@@ -207,16 +207,7 @@ function Features() {
 }
 
 function CopyBlock({ text, children }: { text: string; children: ReactNode }) {
-  const [copied, setCopied] = useState(false)
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(true)
-      setTimeout(() => setCopied(false), COPIED_MS)
-    } catch {
-      // Clipboard access can be refused; the text is still there to select.
-    }
-  }
+  const [copied, copy] = useCopy(text)
   return (
     <div className="relative rounded-xl border bg-card p-4 pr-12 text-left">
       <pre className="overflow-x-auto font-mono text-sm leading-relaxed">{children}</pre>
@@ -251,7 +242,7 @@ function Connect() {
         <div className="flex flex-col gap-5">
           <CopyBlock text={MCP_COMMAND}>
             <span className="text-muted-foreground"># Add OpenWove to Claude Code once</span>
-            {'\nclaude mcp add openwove -- npx tsx \\\n  /path/to/OpenWove/runner/mcp.ts'}
+            {`\n${MCP_COMMAND_SHOWN}`}
           </CopyBlock>
           <ol className="flex flex-col gap-4">
             {steps.map((step, i) => (

@@ -1,6 +1,7 @@
 /** Saves every run to the runs folder, so a restart doesn't forget what happened. */
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { FINAL_EVENTS } from '../src/lib/engine'
 import { parseFlow } from '../src/lib/flow-file'
 import type { StoredRun } from '../src/lib/usage'
 import { ROOT } from './flows'
@@ -21,7 +22,7 @@ function closeOut(run: StoredRun, endedAt: number): StoredRun {
   const finished = new Set<string>()
   for (const e of run.events) {
     if (e.type === 'step_started') started.add(e.stepId)
-    if (['step_done', 'step_denied', 'step_failed', 'step_skipped', 'step_stopped'].includes(e.type) && 'stepId' in e) finished.add(e.stepId)
+    if (FINAL_EVENTS.has(e.type) && 'stepId' in e) finished.add(e.stepId)
   }
   const events = [...run.events]
   for (const step of run.flow.steps) {

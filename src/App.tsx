@@ -10,7 +10,7 @@ import { SetupDialog } from '@/components/setup/setup-dialog'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useAnimationFrame } from '@/hooks/use-animation-frame'
-import { useColorMode } from '@/hooks/use-color-mode'
+import { useApplyColorMode } from '@/hooks/use-color-mode'
 import { STATUS_POLL_MS } from '@/lib/constants'
 import { useFlow } from '@/lib/store'
 
@@ -20,7 +20,6 @@ const SetupView = lazy(() => import('@/components/setup/setup-view').then((m) =>
 export default function App() {
   const view = useFlow((s) => s.view)
   const frame = useFlow((s) => s.frame)
-  const colorMode = useColorMode()
   const checkRunner = useFlow((s) => s.checkRunner)
   const resumeRun = useFlow((s) => s.resumeRun)
   const checkClaude = useFlow((s) => s.checkClaude)
@@ -37,9 +36,7 @@ export default function App() {
   }, [checkClaude])
 
   useAnimationFrame(frame)
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', colorMode === 'dark')
-  }, [colorMode])
+  useApplyColorMode()
 
   return (
     <TooltipProvider delayDuration={150}>

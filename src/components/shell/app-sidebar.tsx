@@ -26,9 +26,9 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar'
 import { HOVER_CHECK_MS } from '@/lib/constants'
+import { flowFileName } from '@/lib/flow-name'
+import { readiness, type Readiness } from '@/lib/runner-status'
 import { useFlow } from '@/lib/store'
-
-const slug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'flow'
 
 /** Your flows, plus opening one from disk or downloading the one on the canvas. */
 function FlowsGroup() {
@@ -62,7 +62,7 @@ function FlowsGroup() {
     const url = URL.createObjectURL(new Blob([exportFlow()], { type: 'application/json' }))
     const link = document.createElement('a')
     link.href = url
-    link.download = `${slug(name)}.json`
+    link.download = flowFileName(name)
     link.click()
     URL.revokeObjectURL(url)
   }
@@ -121,25 +121,21 @@ function FlowsGroup() {
   )
 }
 
+const RUNNER_LABEL: Record<Readiness, string> = {
+  checking: 'Looking for the runner…',
+  offline: 'Runner is off',
+  'no-key': 'Runner needs an API key',
+  ready: 'Runner ready',
+}
+
 /** Whether a real run can happen, in a few words. */
 function RunnerStatus() {
-  const status = useFlow((s) => s.runnerStatus)
-  const label =
-    status.state === 'checking'
-      ? 'Looking for the runner…'
-      : status.state === 'offline'
-        ? 'Runner is off'
-        : status.health.providers.anthropic
-          ? 'Runner ready'
-          : 'Runner needs an API key'
-  const good = status.state === 'ready' && status.health.providers.anthropic
+  const level = useFlow((s) => readiness(s.runnerStatus))
 
   return (
     <div className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-      <StatusDot
-        className={good ? 'bg-earned' : status.state === 'checking' ? 'bg-running animate-pulse-dot' : 'bg-waiting'}
-      />
-      {label}
+      <StatusDot className={level === 'ready' ? 'bg-earned' : level === 'checking' ? 'bg-running animate-pulse-dot' : 'bg-waiting'} />
+      {RUNNER_LABEL[level]}
     </div>
   )
 }

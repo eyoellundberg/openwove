@@ -11,12 +11,13 @@ import {
   UserRoundIcon,
 } from 'lucide-react'
 import { useState, type ComponentType, type ReactNode } from 'react'
+import { ModeSelect } from '@/components/shared/mode-select'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { setThemePreference, useThemePreference, type ThemePreference } from '@/hooks/use-color-mode'
 import { useFlow } from '@/lib/store'
-import type { Provider, RunMode } from '@/lib/types'
+import type { Provider } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 const PROVIDERS: { id: Provider; name: string; env: string }[] = [
@@ -69,15 +70,7 @@ function General() {
       </Group>
       <Group title="Runs" description="Simulated runs play back made-up work for free. Real runs call models and cost money.">
         <Row label="Start in">
-          <Select value={defaultMode} onValueChange={(v) => setDefaultMode(v as RunMode)}>
-            <SelectTrigger aria-label="Default run mode">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="simulated">Simulated run</SelectItem>
-              <SelectItem value="real">Real run</SelectItem>
-            </SelectContent>
-          </Select>
+          <ModeSelect value={defaultMode} onValueChange={setDefaultMode} label="Default run mode" />
         </Row>
       </Group>
     </div>

@@ -1,4 +1,5 @@
-import { useSyncExternalStore } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
+import { readStored, writeStored } from '@/lib/storage'
 
 export type ThemePreference = 'system' | 'light' | 'dark'
 
@@ -17,20 +18,12 @@ const subscribe = (onChange: () => void) => {
 }
 
 const readPreference = (): ThemePreference => {
-  try {
-    const saved = localStorage.getItem(KEY)
-    return saved === 'light' || saved === 'dark' ? saved : 'system'
-  } catch {
-    return 'system'
-  }
+  const saved = readStored('local', KEY)
+  return saved === 'light' || saved === 'dark' ? saved : 'system'
 }
 
 export function setThemePreference(preference: ThemePreference) {
-  try {
-    localStorage.setItem(KEY, preference)
-  } catch {
-    // Storage can be unavailable; the theme still switches for this visit.
-  }
+  writeStored('local', KEY, preference)
   listeners.forEach((l) => l())
 }
 
@@ -42,4 +35,12 @@ export function useColorMode(): 'light' | 'dark' {
   const preference = useThemePreference()
   const system = useSyncExternalStore(subscribe, () => (query().matches ? 'dark' : 'light'))
   return preference === 'system' ? system : preference
+}
+
+/** Puts the `dark` class on <html>, which the theme tokens key off. */
+export function useApplyColorMode() {
+  const colorMode = useColorMode()
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', colorMode === 'dark')
+  }, [colorMode])
 }

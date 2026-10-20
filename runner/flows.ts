@@ -1,8 +1,9 @@
 /** The flows folder: list, read and save flow files. Shared by the runner and the MCP server. */
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, join, resolve } from 'node:path'
-import { RUNNABLE_TOOLS } from '../src/lib/catalog'
+import { findAgent, RUNNABLE_TOOLS } from '../src/lib/catalog'
 import { type FlowFile, parseFlow } from '../src/lib/flow-file'
+import { flowFileName } from '../src/lib/flow-name'
 import { MODELS } from '../src/lib/models'
 import type { FlowListing } from '../src/lib/runner-types'
 
@@ -10,16 +11,6 @@ export const ROOT = resolve(import.meta.dirname, '..')
 export const FLOWS = join(ROOT, 'flows')
 export const WORKSPACE = join(ROOT, 'workspace')
 export const RUNNER_PORT = Number(process.env.RUNNER_PORT ?? 5189)
-
-/** A safe file name inside flows/, from a given name or the flow's own name. */
-export function flowFileName(nameOrFile: string): string {
-  const slug = basename(nameOrFile)
-    .replace(/\.json$/i, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-  return `${slug || 'flow'}.json`
-}
 
 export function listFlows(): FlowListing[] {
   if (!existsSync(FLOWS)) return []
@@ -52,7 +43,7 @@ export function flowWarnings(flow: FlowFile): string[] {
     else if (!known) warnings.push(`${a.name}: "${a.model}" isn’t a model OpenWove knows, so it has no cost and may fail in a real run.`)
     if (known && known.provider !== a.provider) warnings.push(`${a.name}: ${a.model} is a ${known.provider} model, not ${a.provider}.`)
   }
-  const offline = new Set(flow.steps.flatMap((s) => s.tools ?? flow.agents.find((a) => a.id === s.agent)?.tools ?? []))
+  const offline = new Set(flow.steps.flatMap((s) => s.tools ?? findAgent(flow.agents, s.agent).tools))
   RUNNABLE_TOOLS.forEach((t) => offline.delete(t))
   if (offline.size) warnings.push(`Not connected for real runs, so skipped there: ${[...offline].join(', ')}.`)
   return warnings

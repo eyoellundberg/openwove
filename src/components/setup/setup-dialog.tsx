@@ -1,5 +1,4 @@
 import { CheckIcon, CopyIcon } from 'lucide-react'
-import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -11,6 +10,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useCopy } from '@/hooks/use-copy'
+import { mcpSnippets, PLACEHOLDER_ROOT } from '@/lib/mcp-snippets'
 import { SETUP_PROMPT } from '@/lib/seed'
 import { useFlow } from '@/lib/store'
 
@@ -26,27 +27,8 @@ const CONNECT_STEPS = [
   'The flow opens here as your agent saves it. Tweak it and press Save changes; your agent reads what you changed next time it looks.',
 ]
 
-const PLACEHOLDER_ROOT = '/path/to/OpenWove'
-
-function mcpSnippets(root: string) {
-  const command = `${root}/node_modules/.bin/tsx`
-  const script = `${root}/runner/mcp.ts`
-  return {
-    claudeCode: `claude mcp add openwove -- ${command} ${script}`,
-    json: JSON.stringify({ mcpServers: { openwove: { command, args: [script] } } }, null, 2),
-  }
-}
-
 function CopyBlock({ label, text }: { label: string; text: string }) {
-  const [copied, setCopied] = useState(false)
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(true)
-    } catch {
-      setCopied(false)
-    }
-  }
+  const [copied, copy] = useCopy(text)
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between gap-2">

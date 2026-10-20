@@ -56,9 +56,11 @@ export default function App() {
                     </Suspense>
                   </div>
                 )}
-                <div hidden={view !== 'live'} className="min-h-0 flex-1 overflow-y-auto animate-in fade-in">
-                  <LiveView />
-                </div>
+                {view === 'live' && (
+                  <div className="min-h-0 flex-1 overflow-y-auto animate-in fade-in">
+                    <LiveView />
+                  </div>
+                )}
               </div>
             </>
           )}

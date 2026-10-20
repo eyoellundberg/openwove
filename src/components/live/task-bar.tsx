@@ -1,4 +1,5 @@
 import { CheckIcon, TriangleAlertIcon } from 'lucide-react'
+import { memo } from 'react'
 import { ToolIcons } from '@/components/shared/tool-icons'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -20,13 +21,14 @@ const BAR = {
 
 interface TaskBarProps {
   task: Task
+  /** The clock, or the task's end once it has one, so a finished bar's props stay put. */
   now: number
   left: number
   width: number
   onFlag: (taskId: string) => void
 }
 
-export function TaskBar({ task, now, left, width, onFlag }: TaskBarProps) {
+export const TaskBar = memo(function TaskBar({ task, now, left, width, onFlag }: TaskBarProps) {
   const agent = useAgent(task.agent)
   const cost = formatCost(taskCost(task), taskEstimated(task))
   const lines = progressLog(task).slice(-2)
@@ -90,4 +92,4 @@ export function TaskBar({ task, now, left, width, onFlag }: TaskBarProps) {
       </TooltipContent>
     </Tooltip>
   )
-}
+})

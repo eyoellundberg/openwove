@@ -7,7 +7,8 @@ import { useFlow } from '@/lib/store'
 import { cn } from '@/lib/utils'
 
 export function WaitingTray({ flashId }: { flashId: string | null }) {
-  const now = useFlow((s) => s.simT)
+  // Whole minutes: the tray shows nothing finer, so it needn't re-render every frame.
+  const now = useFlow((s) => Math.floor(s.simT))
   const tasks = useFlow((s) => s.tasks)
   const steps = useFlow((s) => s.steps)
   const decide = useFlow((s) => s.decide)

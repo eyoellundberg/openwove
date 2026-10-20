@@ -27,7 +27,7 @@ They share [`src/lib/flow-file.ts`](../src/lib/flow-file.ts), the flow format as
 - **State.** One zustand store, [`src/lib/store.ts`](../src/lib/store.ts), holds the flow, the run and the UI. It's a thin wrapper: all run logic lives in [`src/lib/engine.ts`](../src/lib/engine.ts) as pure functions (`startRun`, `tick`, `decide`, `applyRunnerEvent`, `fastForward`) that take a `Sim` and return a new one.
 - **Time.** The timeline runs on a simulated clock in minutes (`simT`). An animation-frame loop calls the store's `frame`, which calls `engine.tick`. Simulated runs move 1.4 minutes per second, so a whole flow plays in about 15 seconds; real runs move at real speed.
   - The clock updates every frame only while a simulated run plays on Live. Otherwise it updates four times a second (`SLOW_FRAME_SECONDS`), which looks the same and saves a re-render per frame.
-  - `tick` copies only the tasks it changes, so bars that didn't change keep their identity and don't re-render.
+  - `tick` copies only the tasks it changes, and the timeline scrolls by sliding one track under fixed bars, so a bar that didn't change keeps its identity and props and doesn't re-render.
 - **Simulated runs** are made up in the engine: each step works for its `minutes`, pauses for approval at 70% (`GATE_AT`), and spends tokens at a fixed rate for the cost estimate.
 - **Real runs** are driven by the runner. The engine creates the tasks, then `applyRunnerEvent` moves them along as events arrive.
 - **Views.** `src/components/setup/` is the canvas (React Flow, loaded on demand so it stays out of the first download), `src/components/live/` the timeline and tray, `src/components/shell/` the sidebar, Usage page and Settings, and `src/components/shared/` the pieces more than one view uses. Small hooks (color mode, the animation frame) live in `src/hooks/`.
@@ -63,13 +63,13 @@ sequenceDiagram
 
 1. **Start.** The app sends the flow and each step's approval streak. The runner checks the flow again and starts it.
 2. **Stages.** Stages run in order; steps in a stage run at the same time. If a step fails or is denied, the run stops and later steps are skipped.
-3. **Each step** is one Claude tool loop ([`runner/run.ts`](../runner/run.ts)): up to 24 tool calls (`MAX_TURNS`), 16,000 output tokens per reply. Earlier steps' final replies are passed along in the prompt. Calls to Opus and Sonnet opt into Anthropic's server-side fallback (`FALLBACK_MODELS`), so a reply the model declines may come from another model than the card names.
+3. **Each step** is one Claude tool loop ([`runner/run.ts`](../runner/run.ts)): up to 24 tool calls (`MAX_TURNS`), 16,000 output tokens per reply. Earlier steps' final replies are passed along in the prompt. Each call caches its prompt, so later turns of the loop re-read the tools, system prompt and conversation from cache (cached tokens still count at the full input rate on the cost line). Calls to Opus and Sonnet opt into Anthropic's server-side fallback (`FALLBACK_MODELS`), so a reply the model declines may come from another model than the card names.
 4. **Approvals.** A step that asks pauses before its first acting tool call (`write_file`, `edit_file`, `move_file`), so it can read and think freely but can't change anything until you say yes. It asks once per step: after that yes, further writes in the same step go ahead.
 5. **Trouble.** An API call that hits a temporary error (rate limit, overload, no connection) is tried up to 3 times (`API_TRIES`: the first call plus two retries). If a step still can't continue, the runner sends `step_problem` and waits for you to choose **retry**, **skip** or **stop**.
 6. **Events** stream to the app as server-sent events. Each carries its index as the event id, so a reconnecting browser gets only what it missed and costs aren't counted twice. The app stops listening at `run_done`.
-7. **Saving.** After every event the run is written to `runs/<id>.json` (written beside it, then renamed, so a crash can't leave half a file). If the runner stops mid-run, the run is closed out as interrupted when it starts again. The **Usage** page reads these files.
+7. **Saving.** The run is written to `runs/<id>.json` as it goes: a burst of events costs one write, beside the file and then renamed, so a crash can't leave half a file. Once it ends, the runner serves it from that record like a run from before a restart. If the runner stops mid-run, the run is closed out as interrupted when it starts again. The **Usage** page reads these files.
 
-The app remembers the run it's following in that browser tab, so reloading the tab rejoins it. A new tab doesn't.
+The app remembers the run it's following in that browser tab, so reloading the tab rejoins it. A new tab doesn't. If the runner goes away mid-run, the app says so and marks what was still going as stopped.
 
 ## Tools
 

@@ -92,13 +92,19 @@ export const withoutDemoHistory = (sim: Sim): Sim => ({ ...sim, tasks: sim.tasks
 let runCounter = 0
 export const newRunId = () => `run-${Date.now().toString(36)}-${++runCounter}`
 
-/** Stop whatever the current run is doing and queue a fresh run of the flow. */
-export function startRun(sim: Sim, options: { live?: boolean; runId?: string } = {}): Sim {
+/** Nothing in the current run will move again: what had started is stopped, the rest skipped. */
+export function abandonRun(sim: Sim): Sim {
   const tasks = sim.tasks.map((t): Task =>
     t.runId === sim.runId && isActive(t)
       ? { ...t, state: t.start == null ? 'skipped' : 'stopped', end: t.start == null ? null : sim.simT }
       : t,
   )
+  return { ...sim, tasks }
+}
+
+/** Stop whatever the current run is doing and queue a fresh run of the flow. */
+export function startRun(sim: Sim, options: { live?: boolean; runId?: string } = {}): Sim {
+  const { tasks } = abandonRun(sim)
   const runId = options.runId ?? newRunId()
   const fresh = toStages(sim.steps).flatMap((stage, stageIndex) =>
     stage.map(

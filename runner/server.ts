@@ -7,7 +7,7 @@ import { RUNNABLE_TOOLS } from '../src/lib/catalog'
 import { parseFlow } from '../src/lib/flow-file'
 import { listFlows, readFlow, ROOT, RUNNER_PORT as PORT, saveFlow, WORKSPACE } from './flows'
 import { type AppEvent, RESOLUTIONS, type Resolution, type RunnerHealth } from '../src/lib/runner-types'
-import { summarize, type StoredRun } from '../src/lib/usage'
+import { type RunSummary, summarize, type StoredRun } from '../src/lib/usage'
 import { API_TRIES, Run } from './run'
 import { loadRuns, saveRun } from './run-store'
 import { claudeStatus } from './status'
@@ -18,9 +18,38 @@ mkdirSync(WORKSPACE, { recursive: true })
 const hasAnthropic = Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN)
 const client = hasAnthropic ? new Anthropic({ maxRetries: API_TRIES - 1 }) : null
 const runs = new Map<string, Run>()
-/** Runs saved by an earlier runner, or by this one before it was restarted. */
+/** Finished runs, from this runner and from before it was restarted. Served from their records, which don't change. */
 const stored = new Map<string, StoredRun>(loadRuns().map((r) => [r.id, r]))
+const summaries = new Map<string, RunSummary>()
 let runCounter = 0
+
+function summaryOf(record: StoredRun): RunSummary {
+  let summary = summaries.get(record.id)
+  if (!summary) {
+    summary = summarize(record)
+    summaries.set(record.id, summary)
+  }
+  return summary
+}
+
+/** Saves are coalesced: a burst of events (tokens, a log line, a state change) costs one write, once they've all been handled. */
+const saving = new Set<string>()
+function scheduleSave(run: Run) {
+  if (saving.has(run.id)) return
+  saving.add(run.id)
+  setTimeout(() => {
+    saving.delete(run.id)
+    const record = run.toStored()
+    saveRun(record)
+    if (record.endedAt != null) {
+      stored.set(run.id, record)
+      runs.delete(run.id)
+    }
+  }, 0)
+}
+
+/** Where a reconnecting browser left off: the index of the first event it hasn't seen. */
+const nextEventIndex = (req: IncomingMessage) => Number(req.headers['last-event-id'] ?? -1) + 1
 
 /** Open app windows, listening for "your agent saved a flow". */
 const apps = new Set<(e: AppEvent) => void>()
@@ -96,7 +125,7 @@ const server = createServer(async (req, res) => {
       const parsed = parseFlow(body?.flow)
       if (!parsed.ok) return send(res, 400, { error: `The flow has a problem. ${parsed.error}` })
       const id = `live-${Date.now().toString(36)}-${++runCounter}`
-      const run = new Run(id, parsed.flow, body.streaks ?? {}, WORKSPACE, client, (r) => saveRun(r.toStored()))
+      const run = new Run(id, parsed.flow, body.streaks ?? {}, WORKSPACE, client, scheduleSave)
       runs.set(id, run)
       run.start().catch((error) => console.error(`Run ${id} crashed:`, error))
       return send(res, 200, { runId: id })
@@ -104,9 +133,8 @@ const server = createServer(async (req, res) => {
 
     // What every run cost, newest first, from this runner and from before it was restarted.
     if (req.method === 'GET' && url.pathname === '/runs') {
-      const all = new Map(stored)
-      runs.forEach((r) => all.set(r.id, r.toStored()))
-      return send(res, 200, [...all.values()].map(summarize).sort((a, b) => b.startedAt - a.startedAt))
+      const all = [...[...stored.values()].map(summaryOf), ...[...runs.values()].map((r) => summarize(r.toStored()))]
+      return send(res, 200, all.sort((a, b) => b.startedAt - a.startedAt))
     }
 
     const run = parts[0] === 'runs' ? runs.get(parts[1]) : undefined
@@ -115,7 +143,8 @@ const server = createServer(async (req, res) => {
       if (old && req.method === 'GET' && parts[2] === 'events') {
         // A finished run replays what happened. The stream stays open, like a live one, so the browser doesn't keep reconnecting.
         const write = openEventStream(res)
-        old.events.forEach((e) => write(e))
+        const from = nextEventIndex(req)
+        old.events.slice(from).forEach((e, i) => write(e, from + i))
         return
       }
       if (old) return send(res, 409, { error: 'That run has ended.' })
@@ -126,7 +155,7 @@ const server = createServer(async (req, res) => {
       // Each event carries its index, so a reconnecting EventSource gets only what it missed.
       // Replaying everything would add step_usage tokens and step_log lines twice.
       const write = openEventStream(res)
-      const from = Number(req.headers['last-event-id'] ?? -1) + 1
+      const from = nextEventIndex(req)
       run.events.slice(from).forEach((e, i) => write(e, from + i))
       const unsubscribe = run.subscribe((e) => write(e, run.events.length - 1))
       req.on('close', unsubscribe)

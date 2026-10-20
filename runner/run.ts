@@ -166,6 +166,9 @@ export class Run {
       const response = await this.client.beta.messages.create({
         model: agent.model,
         max_tokens: MAX_TOKENS,
+        // Caches everything up to the latest message, so each turn of the tool loop re-reads the tools, the
+        // system prompt and the conversation so far from cache instead of paying for them again.
+        cache_control: { type: 'ephemeral' },
         system: systemPrompt(agent, step, this.workspace, Boolean(files)),
         output_config: { effort: agent.effort },
         ...(files ? { tools: files.tools } : {}),

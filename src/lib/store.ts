@@ -137,6 +137,20 @@ export const useFlow = create<FlowStore>()((set, get) => {
   }
   const sample = flowToState(SAMPLE_FLOW)
 
+  const follow = (runId: string) =>
+    runner.events(
+      runId,
+      (e) => set(engine.applyRunnerEvent(sim(get()), runId, e)),
+      () => {
+        stopListening = null
+        writeSavedRun(null)
+        set({
+          ...engine.abandonRun(sim(get())),
+          notice: 'Lost the runner mid-run, so that run is over. Files it already wrote are still in workspace/.',
+        })
+      },
+    )
+
   return {
     ...engine.startRun({
       simT: 0, tasks: initialHistory(), steps: sample.steps, agents: sample.agents, runs: [], runId: null, runRecorded: true,
@@ -190,7 +204,7 @@ export const useFlow = create<FlowStore>()((set, get) => {
           dirty: false, paused: false, notice: null,
         })
         writeSavedRun({ runId, file: s.file, flow })
-        stopListening = runner.events(runId, (e) => set(engine.applyRunnerEvent(sim(get()), runId, e)))
+        stopListening = follow(runId)
       } catch (error) {
         set({ notice: error instanceof Error ? error.message : 'The runner could not start this flow.' })
       }
@@ -214,7 +228,7 @@ export const useFlow = create<FlowStore>()((set, get) => {
         ...engine.startRun({ ...base, steps: loaded.steps, agents: loaded.agents }, { live: true, runId: saved.runId }),
         name: loaded.name, request: loaded.request, file: saved.file, unsaved: false, mode: 'real', view: 'live',
       })
-      stopListening = runner.events(saved.runId, (e) => set(engine.applyRunnerEvent(sim(get()), saved.runId, e)))
+      stopListening = follow(saved.runId)
       get().checkRunner()
     },
 

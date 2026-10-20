@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { RunnerNote } from '@/components/shared/mode-select'
 import { Notice } from '@/components/shared/notice'
 import { Card } from '@/components/ui/card'
@@ -20,12 +20,12 @@ export function LiveView() {
   }, [flashId])
 
   // "Needs you" on a bar points at its row in the tray.
-  const flag = (taskId: string) => {
+  const flag = useCallback((taskId: string) => {
     setFlashId(taskId)
     const row = document.getElementById(`ask-${taskId}`)
     row?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     row?.querySelector<HTMLButtonElement>('[data-approve]')?.focus({ preventScroll: true })
-  }
+  }, [])
 
   return (
     <Card className="gap-0 py-0">

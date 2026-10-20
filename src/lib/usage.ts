@@ -50,17 +50,18 @@ function statusOf(run: StoredRun): RunStatus {
 }
 
 export function summarize(run: StoredRun): RunSummary {
+  const tokens = new Map<string, { inputTokens: number; outputTokens: number }>()
+  for (const e of run.events) {
+    if (e.type !== 'step_usage') continue
+    const t = tokens.get(e.stepId) ?? { inputTokens: 0, outputTokens: 0 }
+    t.inputTokens += e.inputTokens
+    t.outputTokens += e.outputTokens
+    tokens.set(e.stepId, t)
+  }
   const steps = run.flow.steps.map((step): StepUsage => {
     const agent = findAgent(run.flow.agents, step.agent)
     const model = agent.model
-    let inputTokens = 0
-    let outputTokens = 0
-    for (const e of run.events) {
-      if (e.type === 'step_usage' && e.stepId === step.id) {
-        inputTokens += e.inputTokens
-        outputTokens += e.outputTokens
-      }
-    }
+    const { inputTokens, outputTokens } = tokens.get(step.id) ?? { inputTokens: 0, outputTokens: 0 }
     return {
       stepId: step.id,
       task: step.task,

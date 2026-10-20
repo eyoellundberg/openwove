@@ -28,11 +28,13 @@ export function Timeline({ onFlag }: { onFlag: (taskId: string) => void }) {
   const mode = useFlow((s) => s.mode)
 
   const window = WINDOW_MINUTES[mode]
-  /** Percent across the track for a moment in time. */
-  const xOf = (t: number) => ((t - (now - window)) / window) * 100
+  // Bars sit at fixed places on a track that slides left as time passes, so only the
+  // track's transform changes each frame and a finished bar never re-renders.
+  const xOf = (t: number) => (t / window) * 100
+  const track = { transform: `translateX(${-xOf(now - window)}%)` }
   const tickX = (minutesAgo: number) => ((window - minutesAgo) / window) * 100
 
-  const visible = tasks.filter((t) => t.start != null && xOf(t.end ?? now) > 0)
+  const visible = tasks.filter((t) => t.start != null && (t.end ?? now) > now - window)
   const lanes = lanesFor(agents, visible)
   const laneY = (agent: string) => ((lanes.indexOf(agent) + 0.5) / lanes.length) * 100
   const run = tasks.filter((t) => t.runId === runId)
@@ -103,41 +105,37 @@ export function Timeline({ onFlag }: { onFlag: (taskId: string) => void }) {
             ))}
             {lanes.map((id) => (
               <div key={id} className="relative h-16 border-t border-lane">
-                {visible
-                  .filter((t) => t.agent === id)
-                  .map((t) => {
-                    const left = xOf(t.start!)
-                    return (
+                <div className="absolute inset-0" style={track}>
+                  {visible
+                    .filter((t) => t.agent === id)
+                    .map((t) => (
                       <TaskBar
                         key={t.id}
                         task={t}
-                        now={now}
-                        left={left}
-                        width={Math.max(xOf(t.end ?? now) - left, 1)}
+                        now={t.end ?? now}
+                        left={xOf(t.start!)}
+                        width={Math.max(xOf((t.end ?? now) - t.start!), 1)}
                         onFlag={onFlag}
                       />
-                    )
-                  })}
+                    ))}
+                </div>
               </div>
             ))}
-            <svg
-              aria-hidden
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-              className="pointer-events-none absolute inset-0 size-full overflow-visible"
-            >
-              {links.map((l) => (
-                <path
-                  key={l.id}
-                  d={l.d}
-                  fill="none"
-                  vectorEffect="non-scaling-stroke"
-                  strokeDasharray="3 4"
-                  className={l.settled ? 'stroke-muted-foreground/50' : 'animate-march stroke-running'}
-                  strokeWidth={1.5}
-                />
-              ))}
-            </svg>
+            <div className="pointer-events-none absolute inset-0" style={track}>
+              <svg aria-hidden viewBox="0 0 100 100" preserveAspectRatio="none" className="size-full overflow-visible">
+                {links.map((l) => (
+                  <path
+                    key={l.id}
+                    d={l.d}
+                    fill="none"
+                    vectorEffect="non-scaling-stroke"
+                    strokeDasharray="3 4"
+                    className={l.settled ? 'stroke-muted-foreground/50' : 'animate-march stroke-running'}
+                    strokeWidth={1.5}
+                  />
+                ))}
+              </svg>
+            </div>
           </div>
         </div>
       </div>

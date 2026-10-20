@@ -45,13 +45,17 @@ export const runner = {
       controller.abort()
     }
   },
-  /** Streams a run's events, replaying the ones already sent; returns a function that stops listening. */
-  events(runId: string, onEvent: (e: RunnerEvent) => void) {
+  /** Streams a run's events, replaying the ones already sent; returns a function that stops listening. `onLost` runs if the runner no longer has the run. */
+  events(runId: string, onEvent: (e: RunnerEvent) => void, onLost?: () => void) {
     const source = new EventSource(`/api/runs/${runId}/events`)
     source.onmessage = (m) => {
       const e = JSON.parse(m.data) as RunnerEvent
       onEvent(e)
       if (e.type === 'run_done') source.close()
+    }
+    source.onerror = () => {
+      // While connecting, the browser retries on its own. Closed means the runner answered with an error, e.g. 404 after a restart.
+      if (source.readyState === EventSource.CLOSED) onLost?.()
     }
     return () => source.close()
   },

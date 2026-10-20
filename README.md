@@ -1,4 +1,4 @@
-# Agent Flow
+# OpenWove
 
 A friendly place to see and tweak a multi-agent flow that your own agent set up.
 
@@ -26,11 +26,11 @@ In the app, open **Flows → Lumen landing page**, switch to **Real run**, and p
 
 ## Let your agent set up a flow
 
-Ask Claude Code (or any coding agent) in this folder for multi-agent work, e.g. *"Set up a flow that turns workspace/brief.md into a landing page and a launch email."* It follows `skills/agentflow-builder/SKILL.md`, writes `flows/<name>.json`, and checks it with `npm run check-flow`. The flow then appears under **Flows**.
+Ask Claude Code (or any coding agent) in this folder for multi-agent work, e.g. *"Set up a flow that turns workspace/brief.md into a landing page and a launch email."* It follows `skills/openwove-builder/SKILL.md`, writes `flows/<name>.json`, and checks it with `npm run check-flow`. The flow then appears under **Flows**.
 
 ### Or connect your agent with MCP
 
-Agent Flow is a view of how your agent set up your agents, so your agent can talk to it directly. `runner/mcp.ts` is an MCP server with a `set_up_flow` prompt and tools to read the guide, list, read, save and open flows. `save_flow` checks the flow, writes it to `flows/` and opens it in the app right away (the runner must be running). Press **Save changes** after tweaking it on the canvas, and your agent reads your version with `get_flow`.
+OpenWove is a view of how your agent set up your agents, so your agent can talk to it directly. `runner/mcp.ts` is an MCP server with a `set_up_flow` prompt and tools to read the guide, list, read, save and open flows. `save_flow` checks the flow, writes it to `flows/` and opens it in the app right away (the runner must be running). Press **Save changes** after tweaking it on the canvas, and your agent reads your version with `get_flow`.
 
 - Claude Code in this folder picks it up from `.mcp.json`.
 - Anywhere else: in the app, **Set up with your agent → Connect your agent** has a ready-to-copy command and MCP config with your folder's path.
@@ -48,7 +48,8 @@ What real runs support today: Anthropic models, and one tool (`files`, through t
 | `src/lib/models.ts` | Model prices and cost formatting. |
 | `runner/` | Local runner: real Claude calls, the `files` MCP tool, approvals, event stream. |
 | `runner/mcp.ts` | The MCP server your agent connects to (`npm run mcp`). |
-| `skills/agentflow-builder/` | The skill an agent follows to write a flow file. |
+| `skills/openwove-builder/` | The skill an agent follows to write a flow file. |
+| `site/` | The website: `npm run site` to work on it, `npm run site:build` to build it into `dist-site/`. |
 | `flows/` | Flow files. `docs/user-test.md` is the five-person test script. |
 | `src/lib/store.ts` | Zustand store wrapping the engine; the app's single source of state. |
 | `src/lib/seed.ts` | The sample flow, its simulated playback, and timeline history. |

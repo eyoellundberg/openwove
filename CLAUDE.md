@@ -1,4 +1,4 @@
-# Agent Flow
+# OpenWove
 
 A friendly place to see and tweak multi-agent flows. A person's own agent writes a flow file; the app shows it on a canvas (Set up), runs it, and shows a live timeline with cost and a "Waiting for you" tray (Live). Simulated runs are free playback; real runs go through the local runner.
 
@@ -8,11 +8,12 @@ A friendly place to see and tweak multi-agent flows. A person's own agent writes
 - `npm run runner` — the local runner on port 5189 (Vite proxies `/api` to it). Needs `ANTHROPIC_API_KEY` in `.env.local`.
 - `npm run check-flow flows/<file>.json` — validate a flow file.
 - `npm run mcp` — the MCP server a person's agent connects to (stdio; `.mcp.json` registers it for Claude Code here).
+- `npm run site` / `npm run site:build` — the marketing site in `site/` (React, built with the app's theme and shadcn components through `@/`; output in `dist-site/`).
 - `npx tsc -b`, `npm run lint`, `npm run build` — check before committing.
 
 ## Writing flows
 
-When someone asks for multi-agent work, follow `skills/agentflow-builder/SKILL.md` and write the result to `flows/`. Real runs read and write only inside `workspace/`.
+When someone asks for multi-agent work, follow `skills/openwove-builder/SKILL.md` and write the result to `flows/`. Real runs read and write only inside `workspace/`.
 
 ## Code
 

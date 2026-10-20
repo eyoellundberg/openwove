@@ -9,6 +9,7 @@ import {
   WorkflowIcon,
 } from 'lucide-react'
 import { useRef } from 'react'
+import { Logo } from '@/components/shared/logo'
 import { StatusDot } from '@/components/shared/status-dot'
 import {
   Sidebar,
@@ -24,6 +25,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar'
+import { HOVER_CHECK_MS } from '@/lib/constants'
 import { useFlow } from '@/lib/store'
 
 const slug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'flow'
@@ -174,19 +176,22 @@ export function AppSidebar() {
   const openSettings = useFlow((s) => s.openSettings)
   const checkRunner = useFlow((s) => s.checkRunner)
   const checkClaude = useFlow((s) => s.checkClaude)
+  const lastHoverCheck = useRef(0)
 
   return (
     <Sidebar
       collapsible="icon"
       onMouseEnter={() => {
+        if (Date.now() - lastHoverCheck.current < HOVER_CHECK_MS) return
+        lastHoverCheck.current = Date.now()
         checkRunner()
         checkClaude()
       }}
     >
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-1.5 font-semibold tracking-tight">
-          <WorkflowIcon className="size-5 shrink-0" />
-          <span className="group-data-[collapsible=icon]:hidden">Agent Flow</span>
+          <Logo className="size-5" />
+          <span className="group-data-[collapsible=icon]:hidden">OpenWove</span>
         </div>
       </SidebarHeader>
 

@@ -1,11 +1,11 @@
 ---
-name: agentflow-builder
-description: Turn a plain-language request for multi-agent work into an Agent Flow file (flows/<name>.json) that the Agent Flow app opens on its canvas and can run. Use when someone describes work for several agents, asks to "set up a flow", or wants agents to research, write, review or publish something in steps.
+name: openwove-builder
+description: Turn a plain-language request for multi-agent work into an OpenWove flow file (flows/<name>.json) that the OpenWove app opens on its canvas and can run. Use when someone describes work for several agents, asks to "set up a flow", or wants agents to research, write, review or publish something in steps.
 ---
 
-# Agent Flow builder
+# OpenWove builder
 
-You write one JSON file. The person reviews it on the Agent Flow canvas, tweaks it, and presses Run. Don't run anything yourself.
+You write one JSON file. The person reviews it on the OpenWove canvas, tweaks it, and presses Run. Don't run anything yourself.
 
 ## Steps
 
@@ -16,7 +16,7 @@ You write one JSON file. The person reviews it on the Agent Flow canvas, tweaks 
 5. Check it: `npm run check-flow flows/<short-name>.json`. Fix every problem it lists, and pass its notes (unknown models, tools that won't connect) on to the person.
 6. Tell the person, in two or three sentences, what each stage does, which steps will ask before acting, and that it's under **Flows** in the app.
 
-If the Agent Flow MCP tools are connected (`save_flow`, `get_flow`), use `save_flow` for steps 4 and 5: it checks the flow against the schema, saves it, opens it in the app, and returns the same notes. Before changing an existing flow, read it with `get_flow`; the person may have edited it on the canvas.
+If the OpenWove MCP tools are connected (`save_flow`, `get_flow`), use `save_flow` for steps 4 and 5: it checks the flow against the schema, saves it, opens it in the app, and returns the same notes. Before changing an existing flow, read it with `get_flow`; the person may have edited it on the canvas.
 
 ## The file
 

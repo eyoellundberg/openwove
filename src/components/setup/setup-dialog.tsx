@@ -21,19 +21,19 @@ const PASTE_STEPS = [
 ]
 
 const CONNECT_STEPS = [
-  'Add Agent Flow to your agent once, with one of the snippets below.',
+  'Add OpenWove to your agent once, with one of the snippets below.',
   'Ask it for the work, e.g. “Set up a flow that turns my brief into a landing page.” In Claude Code you can also pick the set_up_flow prompt.',
   'The flow opens here as your agent saves it. Tweak it and press Save changes; your agent reads what you changed next time it looks.',
 ]
 
-const PLACEHOLDER_ROOT = '/path/to/AgentFlow'
+const PLACEHOLDER_ROOT = '/path/to/OpenWove'
 
 function mcpSnippets(root: string) {
   const command = `${root}/node_modules/.bin/tsx`
   const script = `${root}/runner/mcp.ts`
   return {
-    claudeCode: `claude mcp add agentflow -- ${command} ${script}`,
-    json: JSON.stringify({ mcpServers: { agentflow: { command, args: [script] } } }, null, 2),
+    claudeCode: `claude mcp add openwove -- ${command} ${script}`,
+    json: JSON.stringify({ mcpServers: { openwove: { command, args: [script] } } }, null, 2),
   }
 }
 

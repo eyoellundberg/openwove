@@ -26,7 +26,7 @@ export const defaultPrompt = (task: string) =>
 
 export const SETUP_PROMPT = (request: string) => `${request}
 
-Set this up as an Agent Flow: write a flow.json in the flows/ folder, following the agentflow-builder skill.
+Set this up as an OpenWove flow: write a flow.json in the flows/ folder, following the openwove-builder skill.
 - Split the work into stages; steps in the same stage run at the same time.
 - Pick an agent and model for each step, and only the tools it needs.
 - Write each step's prompt in plain language.

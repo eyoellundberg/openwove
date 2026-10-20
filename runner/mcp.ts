@@ -1,5 +1,5 @@
 /**
- * The Agent Flow MCP server: `npm run mcp`, started by the person's own agent (Claude Code,
+ * The OpenWove MCP server: `npm run mcp`, started by the person's own agent (Claude Code,
  * Claude Desktop, Cursor…). The agent sets up flows with these tools; the app shows them.
  * It talks over stdio, so nothing here may write to stdout except the protocol.
  */
@@ -13,12 +13,12 @@ import { listFlows, readFlow, ROOT, RUNNER_PORT, saveFlow, WORKSPACE } from './f
 
 /** The builder skill, without its frontmatter, plus how it works over this connection. */
 function guide(): string {
-  const skill = readFileSync(join(ROOT, 'skills/agentflow-builder/SKILL.md'), 'utf8').replace(/^---[\s\S]*?---\s*/, '')
+  const skill = readFileSync(join(ROOT, 'skills/openwove-builder/SKILL.md'), 'utf8').replace(/^---[\s\S]*?---\s*/, '')
   return `${skill}
 ## Over this connection
 
 - Save with the \`save_flow\` tool instead of writing the file and running check-flow. It checks the flow and tells you what to fix.
-- \`save_flow\` opens the flow in the Agent Flow app if it's open. Then tell the person it's on the Set up tab.
+- \`save_flow\` opens the flow in the OpenWove app if it's open. Then tell the person it's on the Set up tab.
 - To change a flow the person already has, read it with \`get_flow\` first. They may have edited it on the canvas.
 - The person's workspace folder is ${WORKSPACE}. Real runs read and write only there.
 `
@@ -35,19 +35,19 @@ async function showInApp(file: string, open: boolean): Promise<string> {
       body: JSON.stringify({ file, open }),
     })
     const { apps } = (await res.json()) as { apps: number }
-    if (apps === 0) return 'The Agent Flow app isn’t open. The person can open it and find the flow under Flows.'
+    if (apps === 0) return 'The OpenWove app isn’t open. The person can open it and find the flow under Flows.'
     if (!open) return 'The app shows it under Flows.'
-    return 'The Agent Flow app is showing it. If the person has unsaved changes or a run going, the app asks them first.'
+    return 'The OpenWove app is showing it. If the person has unsaved changes or a run going, the app asks them first.'
   } catch {
-    return 'The Agent Flow runner isn’t running, so the app couldn’t be told. Ask the person to start it with `npm run runner`; the flow will be under Flows.'
+    return 'The OpenWove runner isn’t running, so the app couldn’t be told. Ask the person to start it with `npm run runner`; the flow will be under Flows.'
   }
 }
 
 const server = new McpServer(
-  { name: 'agentflow', version: '0.1.0' },
+  { name: 'openwove', version: '0.1.0' },
   {
     instructions:
-      'Agent Flow shows multi-agent flows on a canvas so a person can see, tweak and run them. When the person asks for work split across several agents, read get_guide, then save the flow with save_flow. Don’t run flows yourself; the person runs them from the app.',
+      'OpenWove shows multi-agent flows on a canvas so a person can see, tweak and run them. When the person asks for work split across several agents, read get_guide, then save the flow with save_flow. Don’t run flows yourself; the person runs them from the app.',
   },
 )
 
@@ -55,7 +55,7 @@ server.registerPrompt(
   'set_up_flow',
   {
     title: 'Set up a flow',
-    description: 'Turn a request into a multi-agent flow and show it in Agent Flow.',
+    description: 'Turn a request into a multi-agent flow and show it in OpenWove.',
     argsSchema: { request: z.string().describe('What you want done, in your own words.') },
   },
   ({ request }) => ({
@@ -107,7 +107,7 @@ server.registerTool(
   {
     title: 'Save a flow',
     description:
-      'Check a flow and save it to the flows folder, then show it in the Agent Flow app. If it has a problem, nothing is saved and you get what to fix.',
+      'Check a flow and save it to the flows folder, then show it in the OpenWove app. If it has a problem, nothing is saved and you get what to fix.',
     inputSchema: {
       flow: FlowFileSchema.describe('The flow. See get_guide for how to split work into stages and pick models.'),
       file: z
@@ -129,7 +129,7 @@ server.registerTool(
   'open_flow',
   {
     title: 'Show a flow',
-    description: 'Open a flow from the flows folder in the Agent Flow app.',
+    description: 'Open a flow from the flows folder in the OpenWove app.',
     inputSchema: { file: z.string().describe('The file name from list_flows.') },
   },
   async ({ file }) => {

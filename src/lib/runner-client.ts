@@ -87,7 +87,11 @@ export const runner = {
   /** Streams a run's events, replaying the ones already sent; returns a function that stops listening. */
   events(runId: string, onEvent: (e: RunnerEvent) => void) {
     const source = new EventSource(`/api/runs/${runId}/events`)
-    source.onmessage = (m) => onEvent(JSON.parse(m.data) as RunnerEvent)
+    source.onmessage = (m) => {
+      const e = JSON.parse(m.data) as RunnerEvent
+      onEvent(e)
+      if (e.type === 'run_done') source.close()
+    }
     return () => source.close()
   },
   /** Listens for flows your agent saves; `onLost` runs if the runner goes away. */

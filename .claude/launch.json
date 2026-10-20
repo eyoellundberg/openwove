@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "agentflow",
+      "name": "openwove",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
         "run",
@@ -15,7 +15,7 @@
       "port": 5188
     },
     {
-      "name": "agentflow-alt",
+      "name": "openwove-alt",
       "runtimeExecutable": "env",
       "runtimeArgs": [
         "RUNNER_PORT=5199",
@@ -39,6 +39,19 @@
         "runner"
       ],
       "port": 5199
+    },
+    {
+      "name": "site",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "site",
+        "--",
+        "--port",
+        "5190",
+        "--strictPort"
+      ],
+      "port": 5190
     }
   ]
 }

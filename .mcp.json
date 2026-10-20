@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "agentflow": {
+    "openwove": {
       "command": "npx",
       "args": [
         "tsx",

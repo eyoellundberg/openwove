@@ -81,6 +81,9 @@ export function moveStep(steps: Step[], id: string, drop: Drop): Step[] {
   return fromStages(stages)
 }
 
+/** The made-up history and sample run shown on first open are simulated; drop them once real work is on the page. */
+export const withoutDemoHistory = (sim: Sim): Sim => ({ ...sim, tasks: sim.tasks.filter((t) => t.live) })
+
 /* ---------- running ---------- */
 
 let runCounter = 0

@@ -54,7 +54,20 @@ export const runner = {
       body: JSON.stringify({ stepId, approve }),
     }).then((r) => json<{ ok: true }>(r)),
   stop: (runId: string) => fetch(`/api/runs/${runId}/stop`, { method: 'POST' }).then((r) => json<{ ok: true }>(r)),
-  /** Streams a run's events; returns a function that stops listening. */
+  /** Whether the runner still knows a run. It forgets them when it restarts. */
+  async knowsRun(runId: string): Promise<boolean> {
+    const controller = new AbortController()
+    try {
+      const res = await fetch(`/api/runs/${runId}/events`, { signal: controller.signal })
+      return res.status !== 404
+    } catch {
+      // The runner isn't reachable right now, which says nothing about the run.
+      return true
+    } finally {
+      controller.abort()
+    }
+  },
+  /** Streams a run's events, replaying the ones already sent; returns a function that stops listening. */
   events(runId: string, onEvent: (e: RunnerEvent) => void) {
     const source = new EventSource(`/api/runs/${runId}/events`)
     source.onmessage = (m) => onEvent(JSON.parse(m.data) as RunnerEvent)

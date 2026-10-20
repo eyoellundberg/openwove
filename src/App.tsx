@@ -20,10 +20,12 @@ export default function App() {
   const waiting = useFlow((s) => s.tasks.filter((t) => t.state === 'waiting').length)
   const colorMode = useColorMode()
   const checkRunner = useFlow((s) => s.checkRunner)
+  const resumeRun = useFlow((s) => s.resumeRun)
 
   useEffect(() => {
     checkRunner()
-  }, [checkRunner])
+    resumeRun()
+  }, [checkRunner, resumeRun])
 
   useAnimationFrame(frame)
   useEffect(() => {

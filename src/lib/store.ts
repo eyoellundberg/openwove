@@ -39,6 +39,8 @@ interface FlowStore extends engine.Sim {
 
   frame: (seconds: number) => void
   run: () => Promise<void>
+  /** Rejoin the real run this tab started before it was reloaded. */
+  resumeRun: () => Promise<void>
   togglePause: () => void
   decide: (taskId: string, approve: boolean) => void
   fastForward: () => void
@@ -69,10 +71,35 @@ const savedView = (): View => {
   }
 }
 
+/** The real run this tab started, so a reload can rejoin it. */
+const RUN_KEY = 'agent-flow-run'
+interface SavedRun {
+  runId: string
+  file: string | null
+  flow: unknown
+}
+const readSavedRun = (): SavedRun | null => {
+  try {
+    return JSON.parse(sessionStorage.getItem(RUN_KEY) ?? 'null') as SavedRun | null
+  } catch {
+    return null
+  }
+}
+const writeSavedRun = (run: SavedRun | null) => {
+  try {
+    if (run) sessionStorage.setItem(RUN_KEY, JSON.stringify(run))
+    else sessionStorage.removeItem(RUN_KEY)
+  } catch {
+    // Storage can be unavailable; the run still goes on, it just can't be rejoined.
+  }
+}
+
 const sim = (s: FlowStore): engine.Sim => ({
   simT: s.simT, tasks: s.tasks, steps: s.steps, agents: s.agents, runs: s.runs, runId: s.runId, runRecorded: s.runRecorded,
 })
 
+/** Rejoining a run is tried once per page load, even if React mounts the app twice. */
+let tried = false
 let stopListening: (() => void) | null = null
 let stopAppEvents: (() => void) | null = null
 
@@ -143,11 +170,37 @@ export const useFlow = create<FlowStore>()((set, get) => {
       try {
         const { runId } = await runner.startRun(flow, streaks)
         if (previous) runner.stop(previous).catch(() => undefined)
-        set({ ...engine.startRun(sim(get()), { live: true, runId }), dirty: false, paused: false, notice: null })
+        set({
+          ...engine.startRun(engine.withoutDemoHistory(sim(get())), { live: true, runId }),
+          dirty: false, paused: false, notice: null,
+        })
+        writeSavedRun({ runId, file: s.file, flow })
         stopListening = runner.events(runId, (e) => set(engine.applyRunnerEvent(sim(get()), runId, e)))
       } catch (error) {
         set({ notice: error instanceof Error ? error.message : 'The runner could not start this flow.' })
       }
+    },
+
+    resumeRun: async () => {
+      const saved = readSavedRun()
+      if (!saved || tried) return
+      tried = true
+      const { parseFlow } = await import('./flow-file')
+      const parsed = parseFlow(saved.flow)
+      if (!parsed.ok) return writeSavedRun(null)
+      if (!(await runner.knowsRun(saved.runId))) {
+        writeSavedRun(null)
+        set({ notice: 'The runner restarted, so that run is gone. Files it already wrote are still in workspace/.' })
+        return
+      }
+      const loaded = flowToState(parsed.flow)
+      const base = engine.withoutDemoHistory(get())
+      set({
+        ...engine.startRun({ ...base, steps: loaded.steps, agents: loaded.agents }, { live: true, runId: saved.runId }),
+        name: loaded.name, request: loaded.request, file: saved.file, unsaved: false, mode: 'real', view: 'live',
+      })
+      stopListening = runner.events(saved.runId, (e) => set(engine.applyRunnerEvent(sim(get()), saved.runId, e)))
+      get().checkRunner()
     },
 
     togglePause: () => set((s) => ({ paused: !s.paused })),
@@ -211,7 +264,10 @@ export const useFlow = create<FlowStore>()((set, get) => {
       const loaded = flowToState(parsed.flow)
       stopListening?.()
       stopListening = null
-      set({ ...loaded, file: null, unsaved: false, dirty: get().runId != null, notice: null, promptStepId: null })
+      set({
+        ...loaded, tasks: engine.withoutDemoHistory(sim(get())).tasks,
+        file: null, unsaved: false, dirty: get().runId != null, notice: null, promptStepId: null,
+      })
       return true
     },
     openFlowFile: async (file) => {

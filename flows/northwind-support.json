@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "name": "Northwind support triage",
+  "request": "Go through the support inbox, draft replies, check them against policy, and send nothing until I approve.",
+  "agents": [
+    {
+      "id": "triager",
+      "name": "Triager",
+      "provider": "anthropic",
+      "model": "claude-haiku-5-5",
+      "effort": "low",
+      "tools": [
+        "files"
+      ]
+    },
+    {
+      "id": "support-writer",
+      "name": "Support writer",
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "effort": "medium",
+      "tools": [
+        "files"
+      ]
+    },
+    {
+      "id": "policy-checker",
+      "name": "Policy checker",
+      "provider": "anthropic",
+      "model": "claude-opus-5-5",
+      "effort": "medium",
+      "tools": [
+        "files"
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "id": "sort",
+      "agent": "triager",
+      "task": "Sort the inbox",
+      "prompt": "Read northwind/support-inbox.md. Write northwind/support/triage.md: for each email, a category (damaged order, shipping question, billing/refund, product question, feedback) and urgency (high/normal/low).",
+      "stage": 0,
+      "approval": "never"
+    },
+    {
+      "id": "draft",
+      "agent": "support-writer",
+      "task": "Draft replies",
+      "prompt": "Read northwind/company.md, northwind/support-inbox.md and northwind/support/triage.md. Write a reply to each email in northwind/support/drafts.md, in the voice from company.md. Don't promise anything company.md policies don't allow.",
+      "stage": 1,
+      "approval": "never"
+    },
+    {
+      "id": "check",
+      "agent": "policy-checker",
+      "task": "Check against policy",
+      "prompt": "Read northwind/company.md and northwind/support/drafts.md. Check each reply against policy and voice (e.g. no health claims, correct shipping and refund rules). Fix problems in drafts.md and note any email a human should look at in northwind/support/flags.md.",
+      "stage": 2,
+      "approval": "never"
+    },
+    {
+      "id": "send",
+      "agent": "support-writer",
+      "task": "Queue replies to send",
+      "prompt": "Split the final drafts into one file per email in northwind/support/outbox/ (reply-1.md, reply-2.md, ...).",
+      "stage": 3,
+      "approval": "earned",
+      "asks": "wants to queue the support replies for sending"
+    }
+  ]
+}

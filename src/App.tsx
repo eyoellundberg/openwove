@@ -2,6 +2,8 @@ import { lazy, Suspense, useEffect } from 'react'
 import { LiveHeader } from '@/components/live/live-header'
 import { LiveView } from '@/components/live/live-view'
 import { AppSidebar } from '@/components/shell/app-sidebar'
+import { SettingsDialog } from '@/components/shell/settings-dialog'
+import { UsagePage } from '@/components/shell/placeholder-pages'
 import { PromptDialog } from '@/components/setup/prompt-dialog'
 import { SetupHeader } from '@/components/setup/setup-header'
 import { SetupDialog } from '@/components/setup/setup-dialog'
@@ -44,29 +46,31 @@ export default function App() {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset className="h-dvh min-w-0">
-          {view === 'live' ? <LiveHeader /> : <SetupHeader />}
-
-          <div className="flex min-h-0 flex-1 flex-col px-4 py-4 sm:px-6">
-            {/* Mounted only while open, so React Flow measures the cards and fits them on arrival. */}
-            {view === 'setup' && (
-              <div className="min-h-0 flex-1 animate-in fade-in">
-                <Suspense fallback={<p className="text-sm text-muted-foreground">Loading the canvas…</p>}>
-                  <SetupView />
-                </Suspense>
+          {view === 'usage' && <UsagePage />}
+          {view !== 'usage' && (
+            <>
+              {view === 'live' ? <LiveHeader /> : <SetupHeader />}
+              <div className="flex min-h-0 flex-1 flex-col px-4 py-4 sm:px-6">
+                {/* Mounted only while open, so React Flow measures the cards and fits them on arrival. */}
+                {view === 'setup' && (
+                  <div className="min-h-0 flex-1 animate-in fade-in">
+                    <Suspense fallback={<p className="text-sm text-muted-foreground">Loading the canvas…</p>}>
+                      <SetupView />
+                    </Suspense>
+                  </div>
+                )}
+                <div hidden={view !== 'live'} className="min-h-0 flex-1 overflow-y-auto animate-in fade-in">
+                  <LiveView />
+                </div>
               </div>
-            )}
-            <div
-              hidden={view !== 'live'}
-              className="min-h-0 flex-1 overflow-y-auto animate-in fade-in"
-            >
-              <LiveView />
-            </div>
-          </div>
+            </>
+          )}
         </SidebarInset>
       </SidebarProvider>
 
       <PromptDialog />
       <SetupDialog />
+      <SettingsDialog />
     </TooltipProvider>
   )
 }

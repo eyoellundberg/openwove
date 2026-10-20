@@ -85,4 +85,4 @@ export interface RunRecord {
   estimated: boolean
 }
 
-export type View = 'setup' | 'live'
+export type View = 'setup' | 'live' | 'usage'

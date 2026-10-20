@@ -1,4 +1,13 @@
-import { ActivityIcon, DownloadIcon, FileJsonIcon, FolderOpenIcon, PlugIcon, WorkflowIcon } from 'lucide-react'
+import {
+  ActivityIcon,
+  ChartNoAxesColumnIcon,
+  DownloadIcon,
+  FileJsonIcon,
+  FolderOpenIcon,
+  PlugIcon,
+  SettingsIcon,
+  WorkflowIcon,
+} from 'lucide-react'
 import { useRef } from 'react'
 import { StatusDot } from '@/components/shared/status-dot'
 import {
@@ -162,6 +171,7 @@ export function AppSidebar() {
   const setView = useFlow((s) => s.setView)
   const waiting = useFlow((s) => s.tasks.filter((t) => t.state === 'waiting').length)
   const openSetup = useFlow((s) => s.openSetup)
+  const openSettings = useFlow((s) => s.openSettings)
   const checkRunner = useFlow((s) => s.checkRunner)
   const checkClaude = useFlow((s) => s.checkClaude)
 
@@ -195,6 +205,12 @@ export function AppSidebar() {
                   </SidebarMenuBadge>
                 )}
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton isActive={view === 'usage'} tooltip="Usage" onClick={() => setView('usage')}>
+                  <ChartNoAxesColumnIcon />
+                  <span>Usage</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -210,6 +226,12 @@ export function AppSidebar() {
             <SidebarMenuButton tooltip="Connect your agent" onClick={() => openSetup(true)}>
               <PlugIcon />
               <span>Connect your agent</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip="Settings" onClick={() => openSettings(true)}>
+              <SettingsIcon />
+              <span>Settings</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

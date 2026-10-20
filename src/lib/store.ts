@@ -20,6 +20,8 @@ interface FlowStore extends engine.Sim {
   name: string
   request: string
   mode: RunMode
+  /** The mode the app starts in, saved on this computer. */
+  defaultMode: RunMode
   runnerStatus: RunnerStatus
   /** Whether Claude is up; null until the runner has answered once. */
   claudeStatus: ProviderStatus | null
@@ -38,6 +40,7 @@ interface FlowStore extends engine.Sim {
   view: View
   promptStepId: string | null
   setupOpen: boolean
+  settingsOpen: boolean
 
   frame: (seconds: number) => void
   run: () => Promise<void>
@@ -64,7 +67,19 @@ interface FlowStore extends engine.Sim {
   openPrompt: (id: string | null) => void
   savePrompt: (id: string, prompt: string) => void
   openSetup: (open: boolean) => void
+  openSettings: (open: boolean) => void
+  /** Which mode the app starts in next time, and the one it uses now. */
+  setDefaultMode: (mode: RunMode) => void
   dismissNotice: () => void
+}
+
+const MODE_KEY = 'agent-flow-default-mode'
+const savedMode = (): RunMode => {
+  try {
+    return localStorage.getItem(MODE_KEY) === 'real' ? 'real' : 'simulated'
+  } catch {
+    return 'simulated'
+  }
 }
 
 const VIEW_KEY = 'agent-flow-view'
@@ -141,7 +156,8 @@ export const useFlow = create<FlowStore>()((set, get) => {
     }),
     name: sample.name,
     request: sample.request,
-    mode: 'simulated',
+    mode: savedMode(),
+    defaultMode: savedMode(),
     runnerStatus: { state: 'checking' },
     claudeStatus: null,
     flowFiles: [],
@@ -154,6 +170,7 @@ export const useFlow = create<FlowStore>()((set, get) => {
     view: savedView(),
     promptStepId: null,
     setupOpen: false,
+    settingsOpen: false,
 
     frame: (seconds) => {
       const s = get()
@@ -319,6 +336,16 @@ export const useFlow = create<FlowStore>()((set, get) => {
     openPrompt: (promptStepId) => set({ promptStepId }),
     savePrompt: (id, prompt) => get().updateStep(id, { prompt, promptEdited: true }),
     openSetup: (setupOpen) => set({ setupOpen }),
+    openSettings: (settingsOpen) => set({ settingsOpen }),
+    setDefaultMode: (mode) => {
+      try {
+        localStorage.setItem(MODE_KEY, mode)
+      } catch {
+        // Storage can be unavailable; the mode still changes for this visit.
+      }
+      set({ defaultMode: mode })
+      get().setMode(mode)
+    },
     dismissNotice: () => set({ notice: null }),
   }
 })

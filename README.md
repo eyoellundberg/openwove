@@ -15,7 +15,7 @@ You ask your coding agent (Claude Code, or anything that speaks MCP) for work th
 - **Set up.** A zoomable canvas where each card is one step: the agent, its task, its prompt, and whether it asks before acting. Drag a card beside another to run them at the same time.
 - **Live.** A timeline of what every agent is doing, what it costs, and a **Waiting for you** tray where you approve or deny.
 - **Ask until it's earned it.** A step asks every time until you've approved it three times in a row, then asks less. One deny and it asks every time again.
-- **Cost.** Every bar, agent and run shows its cost. Real runs use the API's token counts and Anthropic list prices; estimates are marked with `~`.
+- **Cost.** Every bar, agent and run shows its cost. Real runs use the API's token counts and Anthropic list prices (cached input tokens count at the full input rate, so if anything the number is high); estimates are marked with `~`.
 
 ## Quick start
 
@@ -77,7 +77,7 @@ Without MCP, an agent can follow [`skills/openwove-builder/SKILL.md`](skills/ope
 | `npm run mcp` | The MCP server your agent starts (stdio). |
 | `npm run check-flow flows/<file>.json` | Check a flow file and list every problem. |
 | `npm run site` | The website in `site/`. `npm run site:build` builds it into `dist-site/`. |
-| `npx tsc -b && npm run lint && npm run build` | Everything CI checks, before you commit. |
+| `npx tsc -b && npm run lint && npm run build && npm run site:build` | What CI checks, before you commit. CI also runs `check-flow` on every sample flow. |
 
 ## Documentation
 

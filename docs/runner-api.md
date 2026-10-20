@@ -2,7 +2,7 @@
 
 The runner ([`runner/server.ts`](../runner/server.ts)) is a small HTTP server on `localhost:5189`; set `RUNNER_PORT` to change it. The app reaches it at `/api/...`, which Vite proxies to the runner with the `/api` prefix removed.
 
-It listens on your computer only and has no authentication, so don't expose its port.
+It listens on `127.0.0.1` only and has no authentication, so don't expose its port.
 
 Bodies are JSON. Errors come back as `{ "error": "A sentence you can show the person." }` with a 4xx or 5xx status.
 
@@ -26,7 +26,7 @@ Bodies are JSON. Errors come back as `{ "error": "A sentence you can show the pe
 | Method and path | Does |
 |---|---|
 | `GET /app-events` | An event stream for open app windows. Sends `{ type: "flow-saved", file, open }` when your agent saves a flow. |
-| `POST /app-events` | `{ file, open? }`. Used by the MCP server after a save; forwards `flow-saved` to every open window. Returns `{ apps }`, the number of windows told. |
+| `POST /app-events` | `{ file, open? }`. Used by the MCP server after a save; forwards `flow-saved` to every open window. Returns `{ apps }`, the number of windows told. 400 without `file`. |
 
 ## Runs
 
@@ -36,16 +36,16 @@ Bodies are JSON. Errors come back as `{ "error": "A sentence you can show the pe
 | `GET /runs` | Every run on this computer, newest first, with status, cost and per-step usage. This is what the **Usage** page shows. |
 | `GET /runs/:id/events` | The run's event stream. See below. |
 | `POST /runs/:id/decide` | `{ stepId, approve }` answers a step that's waiting for you. 409 if it isn't waiting anymore. |
-| `POST /runs/:id/resolve` | `{ stepId, action }` answers a step that ran into trouble. `action` is `retry`, `skip` or `stop`. 409 if it isn't waiting anymore. |
-| `POST /runs/:id/stop` | Stops the run. Waiting steps are denied, and later steps are skipped. |
+| `POST /runs/:id/resolve` | `{ stepId, action }` answers a step that ran into trouble. `action` is `retry`, `skip` or `stop`; anything else is a 400. 409 if it isn't waiting anymore. |
+| `POST /runs/:id/stop` | Stops the run. A step waiting for approval is denied, a step waiting after a problem is failed, and later steps are skipped. |
 
-Run routes return 404 for a run this runner doesn't know, and 409 for one that has ended (except `events`, which replays it).
+Run routes return 404 for a run this runner doesn't know. A run saved by an earlier runner answers 409 ("That run has ended"), except `events`, which replays it. A run that ended in this runner still answers its routes: `decide` and `resolve` say 409 because nothing is waiting, and `stop` does nothing.
 
 ## Run events
 
-`GET /runs/:id/events` is a [server-sent event](https://developer.mozilla.org/docs/Web/API/Server-sent_events) stream. It first replays what has already happened, then sends new events as they occur.
+`GET /runs/:id/events` is a [server-sent event](https://developer.mozilla.org/docs/Web/API/Server-sent_events) stream. It first replays what has already happened, then sends new events as they occur. The app also uses it to ask whether a run is still known (a 404 means it isn't; see `knowsRun` in [`src/lib/runner-client.ts`](../src/lib/runner-client.ts)).
 
-Each event's `id` is its index in the run. On reconnect, the browser sends `Last-Event-ID` and gets only what it missed, so token counts and logs are never applied twice. A finished run loaded from disk replays without ids.
+Each event's `id` is its index in the run. On reconnect, the browser sends `Last-Event-ID` and gets only what it missed, so token counts and logs are never applied twice. A finished run loaded from disk replays without ids, and its stream stays open on purpose, so the browser doesn't keep reconnecting.
 
 | Event | Fields | Meaning |
 |---|---|---|
@@ -63,7 +63,7 @@ Each event's `id` is its index in the run. On reconnect, the browser sends `Last
 | `step_stopped` | `stepId` | Stopped mid-way, because you stopped the run or the runner shut down. |
 | `run_done` | | Nothing more will happen. |
 
-The event type lives in [`src/lib/engine.ts`](../src/lib/engine.ts) (`RunnerEvent`), and `applyRunnerEvent` is how the app applies each one.
+The event type lives in [`src/lib/engine.ts`](../src/lib/engine.ts) (`RunnerEvent`), and `applyRunnerEvent` is how the app applies each one. The other shapes above (`/health`, `/status`, `/flows`, app events, `action`) live in [`src/lib/runner-types.ts`](../src/lib/runner-types.ts), shared by the runner and the client.
 
 ## Saved runs
 

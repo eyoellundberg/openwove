@@ -5,7 +5,7 @@ import { flowWarnings } from '../runner/flows'
 
 const path = process.argv[2]
 if (!path) {
-  console.error('Usage: npm run check-flow <path to flow.json>')
+  console.error('Usage: npm run check-flow flows/<name>.json')
   process.exit(1)
 }
 

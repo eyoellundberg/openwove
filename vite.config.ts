@@ -10,7 +10,7 @@ export default defineConfig({
     // The local runner (npm run runner). Event streams pass straight through.
     proxy: {
       '/api': {
-        target: `http://localhost:${process.env.RUNNER_PORT ?? 5189}`,
+        target: `http://127.0.0.1:${process.env.RUNNER_PORT ?? 5189}`,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },

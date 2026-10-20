@@ -18,7 +18,7 @@ function guide(): string {
 ## Over this connection
 
 - Save with the \`save_flow\` tool instead of writing the file and running check-flow. It checks the flow and tells you what to fix.
-- \`save_flow\` opens the flow in the OpenWove app if it's open. Then tell the person it's on the Set up tab.
+- \`save_flow\` opens the flow on the canvas if the app is open. Its answer says what happened; pass that on to the person.
 - To change a flow the person already has, read it with \`get_flow\` first. They may have edited it on the canvas.
 - The person's workspace folder is ${WORKSPACE}. Real runs read and write only there.
 `
@@ -29,7 +29,7 @@ const text = (t: string, isError = false) => ({ content: [{ type: 'text' as cons
 /** Ask the runner to show a flow in any open app window. Never throws: the app may simply be closed. */
 async function showInApp(file: string, open: boolean): Promise<string> {
   try {
-    const res = await fetch(`http://localhost:${RUNNER_PORT}/app-events`, {
+    const res = await fetch(`http://127.0.0.1:${RUNNER_PORT}/app-events`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ file, open }),

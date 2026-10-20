@@ -1,5 +1,5 @@
 /**
- * The flow file (`flow.json`): what an agent writes when it sets up a flow, what the
+ * The flow file (`flows/<name>.json`): what an agent writes when it sets up a flow, what the
  * canvas opens, and what the runner executes. Shared by the app and the runner, so it
  * imports nothing but zod. The descriptions are the docs: agents see them as JSON Schema.
  */
@@ -34,7 +34,7 @@ export const FlowStepSchema = z.strictObject({
   prompt: z
     .string()
     .min(1)
-    .describe('What the agent is told to do, in plain language: what to make, from what, where to save it. Earlier stages’ results are passed along automatically.'),
+    .describe('What the agent is told to do, in plain language: what to make, from what, where to save it. Earlier steps’ results are passed along automatically.'),
   stage: z
     .int()
     .min(0)

@@ -5,8 +5,9 @@ import { join } from 'node:path'
 import Anthropic from '@anthropic-ai/sdk'
 import { parseFlow } from '../src/lib/flow-file'
 import { listFlows, readFlow, ROOT, RUNNER_PORT as PORT, saveFlow, WORKSPACE } from './flows'
+import { type AppEvent, RESOLUTIONS, type Resolution, type RunnerHealth } from '../src/lib/runner-types'
 import { summarize, type StoredRun } from '../src/lib/usage'
-import { API_TRIES, Run, type Resolution } from './run'
+import { API_TRIES, Run } from './run'
 import { loadRuns, saveRun } from './run-store'
 import { claudeStatus } from './status'
 
@@ -21,7 +22,6 @@ const stored = new Map<string, StoredRun>(loadRuns().map((r) => [r.id, r]))
 let runCounter = 0
 
 /** Open app windows, listening for "your agent saved a flow". */
-type AppEvent = { type: 'flow-saved'; file: string; open: boolean }
 const apps = new Set<(e: AppEvent) => void>()
 
 function send(res: ServerResponse, status: number, body: unknown) {
@@ -41,12 +41,13 @@ const server = createServer(async (req, res) => {
 
   try {
     if (req.method === 'GET' && url.pathname === '/health') {
-      return send(res, 200, {
+      const health: RunnerHealth = {
         providers: { anthropic: hasAnthropic, openai: false, google: false },
         tools: ['files'],
         workspace: WORKSPACE,
         root: ROOT,
-      })
+      }
+      return send(res, 200, health)
     }
 
     if (req.method === 'GET' && url.pathname === '/status') return send(res, 200, { anthropic: await claudeStatus() })
@@ -135,7 +136,7 @@ const server = createServer(async (req, res) => {
 
     if (run && req.method === 'POST' && parts[2] === 'resolve') {
       const { stepId, action } = (await readJson(req)) as { stepId: string; action: Resolution }
-      if (!['retry', 'skip', 'stop'].includes(action)) return send(res, 400, { error: 'Say retry, skip or stop.' })
+      if (!RESOLUTIONS.includes(action)) return send(res, 400, { error: 'Say retry, skip or stop.' })
       if (!run.resolve(stepId, action)) return send(res, 409, { error: 'That step isn’t waiting for you anymore.' })
       return send(res, 200, { ok: true })
     }
@@ -151,7 +152,7 @@ const server = createServer(async (req, res) => {
   }
 })
 
-server.listen(PORT, () => {
+server.listen(PORT, '127.0.0.1', () => {
   console.log(`OpenWove runner on http://localhost:${PORT}`)
   console.log(`Workspace: ${WORKSPACE}`)
   console.log(hasAnthropic ? 'Anthropic: ready' : 'Anthropic: no key. Add ANTHROPIC_API_KEY to .env.local.')

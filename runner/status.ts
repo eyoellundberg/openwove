@@ -1,4 +1,5 @@
 /** Is Claude up? Reads Anthropic's public status page, so the app can say so before and after a step fails. */
+import type { ProviderStatus } from '../src/lib/runner-types'
 
 const STATUS_URL = 'https://status.claude.com/api/v2/summary.json'
 /** The part of Anthropic's status page that real runs depend on. */
@@ -6,16 +7,6 @@ const API_COMPONENT = 'Claude API (api.anthropic.com)'
 /** Don't ask the status page more often than this, however many windows are open. */
 const CACHE_MS = 30_000
 const TIMEOUT_MS = 5_000
-
-export interface ProviderStatus {
-  /** `unknown` means the status page itself couldn't be reached. */
-  level: 'ok' | 'slow' | 'down' | 'unknown'
-  /** One plain line, e.g. "All good" or "Slower than usual". */
-  text: string
-  /** What Anthropic says is going on, when something is. */
-  incident?: string
-  checkedAt: number
-}
 
 interface Summary {
   components: { name: string; status: string }[]

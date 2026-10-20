@@ -37,16 +37,17 @@ In the app, **Connect your agent** shows both with your folder's real path fille
 | `get_guide` | Tool, read-only | The flow format, how to pick agents and models, and when to ask before acting. Read it before the first save. |
 | `list_flows` | Tool, read-only | The flows in `flows/`, by file and name. |
 | `get_flow` | Tool, read-only | One flow as it is now, including changes you made on the canvas. Takes `file`. |
-| `save_flow` | Tool | Checks a flow and saves it to `flows/`, then opens it in the app. Takes `flow`, and optionally `file` (defaults to the flow's name) and `open` (defaults to true). If the flow has a problem, nothing is saved and the agent gets the list to fix. |
+| `save_flow` | Tool | Checks a flow and saves it to `flows/`, then opens it in the app. Takes `flow`, and optionally `file` (defaults to the flow's name; an existing file of that name is replaced) and `open` (defaults to true). If the flow has a problem, nothing is saved and the agent gets the list to fix. |
 | `open_flow` | Tool | Opens a saved flow in the app. Takes `file`. |
 
-The guide is [`skills/openwove-builder/SKILL.md`](../skills/openwove-builder/SKILL.md), so an agent gets the same instructions over MCP as from the file.
+The guide is [`skills/openwove-builder/SKILL.md`](../skills/openwove-builder/SKILL.md) plus a short section on using these tools instead of the file and checker, and the absolute path of your `workspace/`. So an agent gets the same rules over MCP as from the file.
 
 ## Saving opens the flow in the app
 
 After a save, the server asks the runner to tell every open app window (see [architecture.md](architecture.md#when-your-agent-saves-a-flow)). It answers your agent with which of these happened:
 
 - **The app is showing it.** If you had unsaved changes or a run going, the app asked you first.
+- **The app has it under Flows.** Your agent saved with `open: false`, so nothing changed on screen.
 - **The app isn't open.** The flow is under **Flows** when you open it.
 - **The runner isn't running.** The flow is saved, but the app couldn't be told. Start the runner with `npm run runner`.
 

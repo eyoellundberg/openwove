@@ -33,7 +33,7 @@ To run a second copy alongside the first, for example from another worktree, set
 npx tsc -b && npm run lint && npm run build && npm run site:build
 ```
 
-CI runs the same checks, plus `check-flow` on every file in `flows/`, on every push and pull request. See [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
+CI runs the same checks, plus `check-flow` on every file in `flows/`, on every pull request and on every push to `main`. See [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
 
 After a UI change, look at it in the browser in light and dark mode and at phone width. Type checks don't catch layout.
 
@@ -66,11 +66,11 @@ Write from the person's side, plainly:
 
 **Add a model.** Add it to `MODELS` in `src/lib/models.ts` with its prices. Real runs only call Anthropic models.
 
-**Add a tool icon.** Add it to `TOOLS` in [`src/lib/catalog.ts`](../src/lib/catalog.ts). It shows on cards and runs in simulated mode. Running it for real also needs the runner to connect it; see `runner/files-tool.ts` for how `files` does it.
+**Add a tool icon.** Add it to `TOOLS` in [`src/lib/catalog.ts`](../src/lib/catalog.ts). It shows on cards and runs in simulated mode. Running it for real also needs the runner to connect it (see `runner/files-tool.ts` for how `files` does it, and `ACTING_TOOLS` there for which calls ask first), and its id in `RUNNABLE_TOOLS` in `catalog.ts` so the checker stops warning about it.
 
 **Change the flow format.** Edit the schema, then update [flow-format.md](flow-format.md), the builder skill and the sample flows, and run `check-flow` on each sample. Agents read the schema's descriptions, so keep them accurate.
 
-**Add a runner route.** Add it to `runner/server.ts`, the client in [`src/lib/runner-client.ts`](../src/lib/runner-client.ts), and [runner-api.md](runner-api.md).
+**Add a runner route.** Add it to `runner/server.ts`, the client in [`src/lib/runner-client.ts`](../src/lib/runner-client.ts), and [runner-api.md](runner-api.md). Shapes the runner and the app both use go in [`src/lib/runner-types.ts`](../src/lib/runner-types.ts), so neither side keeps its own copy.
 
 ## Git
 

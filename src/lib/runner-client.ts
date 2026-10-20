@@ -1,38 +1,10 @@
 /** Talks to the local runner (`npm run runner`), which Vite proxies under /api. */
 import type { RunnerEvent } from './engine'
 import type { FlowFile } from './flow-file'
+import type { AppEvent, FlowListing, ProviderStatus, Resolution, RunnerHealth } from './runner-types'
 import type { RunSummary } from './usage'
-import type { Provider } from './types'
 
-export interface RunnerHealth {
-  providers: Record<Provider, boolean>
-  tools: string[]
-  workspace: string
-  /** The project folder, for the MCP setup snippet. */
-  root: string
-}
-
-/** Your agent saved a flow through the MCP server. */
-export interface AppEvent {
-  type: 'flow-saved'
-  file: string
-  open: boolean
-}
-
-/** Whether Claude is up, from Anthropic's status page via the runner. */
-export interface ProviderStatus {
-  level: 'ok' | 'slow' | 'down' | 'unknown'
-  text: string
-  incident?: string
-}
-
-/** What you can tell a step that ran into trouble. */
-export type Resolution = 'retry' | 'skip' | 'stop'
-
-export interface FlowListing {
-  file: string
-  name: string
-}
+export type { AppEvent, FlowListing, ProviderStatus, Resolution, RunnerHealth } from './runner-types'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {

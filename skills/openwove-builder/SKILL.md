@@ -5,7 +5,7 @@ description: Turn a plain-language request for multi-agent work into an OpenWove
 
 # OpenWove builder
 
-You write one JSON file. The person reviews it on the OpenWove canvas, tweaks it, and presses Run. Don't run anything yourself.
+You write one JSON file. The person reviews it on the OpenWove canvas, tweaks it, and presses **Run flow**. Don't run anything yourself.
 
 ## Steps
 
@@ -42,10 +42,11 @@ If the OpenWove MCP tools are connected (`save_flow`, `get_flow`), use `save_flo
 }
 ```
 
-- `id`s: lowercase letters, digits and dashes. Step ids are unique.
+- `id`s: lowercase letters, digits and dashes. Agent ids are unique, and so are step ids.
 - `stage`: counts up from 0 with no gaps.
 - `tools` on a step overrides the agent's tools; leave it out to use the agent's.
-- `asks`: how the approval request reads after the agent's name ("Writer wants to …").
+- `asks`: how the approval request reads after the agent's name ("Writer wants to …"). Only on steps that ask.
+- `request`: the person's request in their words, so they recognize the flow later. `effort` is `low`, `medium` or `high` and defaults to `medium`.
 
 ## Agents and models
 
@@ -55,7 +56,7 @@ Name agents by their job (Researcher, Writer, Reviewer), not by model. Reuse an 
 |---|---|---|
 | Reading, sorting, short summaries, checklists | `claude-haiku-5-5` | `low` |
 | Writing, editing, most everyday steps | `claude-sonnet-5-5` | `medium` |
-| Hard reasoning, tricky judgment, long documents | `claude-opus-5-5` | `medium` |
+| Hard reasoning, tricky judgment, long documents | `claude-opus-5-5` | `medium`, or `high` when it really matters |
 
 Only `provider: "anthropic"` runs for real today. Other providers (`openai`, `google`) open on the canvas but only run in simulated mode; use them only if the person asks.
 
@@ -68,7 +69,7 @@ Only give a step the tools it needs.
 
 ## Prompts
 
-Write each prompt like a message to a capable colleague: what to produce, from which inputs, where to save it, and any limits (length, tone, facts to stick to). Name exact file paths. Don't restate the whole plan; each agent only needs its own job. Earlier stages' results are passed along automatically.
+Write each prompt like a message to a capable colleague: what to produce, from which inputs, where to save it, and any limits (length, tone, facts to stick to). Name exact file paths. Don't restate the whole plan; each agent only needs its own job. Earlier steps' results are passed along automatically.
 
 ## Approvals
 

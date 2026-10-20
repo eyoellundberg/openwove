@@ -41,7 +41,7 @@ The full version is [`flows/landing-page.json`](../flows/landing-page.json).
 | Field | Type | Required | Meaning |
 |---|---|---|---|
 | `version` | `1` | Yes | The format version. Always `1` for now. |
-| `name` | string | Yes | What you'll recognize the flow by. Shown in the sidebar and on the canvas. |
+| `name` | string, not empty | Yes | What you'll recognize the flow by. Shown in the sidebar and on the canvas. |
 | `request` | string | No | What the person asked for, in their words. Defaults to `""`. |
 | `agents` | Agent[] | Yes, at least one | Who does the work. |
 | `steps` | Step[] | Yes, at least one | What gets done, and in which order. |
@@ -51,9 +51,9 @@ The full version is [`flows/landing-page.json`](../flows/landing-page.json).
 | Field | Type | Required | Meaning |
 |---|---|---|---|
 | `id` | id | Yes | Short id that steps refer to, e.g. `"writer"`. |
-| `name` | string | Yes | Named by its job, e.g. `"Writer"`. |
+| `name` | string, not empty | Yes | Named by its job, e.g. `"Writer"`. |
 | `provider` | `"anthropic"`, `"openai"`, `"google"` | Yes | Only `anthropic` runs for real today. Others run in simulated mode. |
-| `model` | string | Yes | The provider's model id, e.g. `"claude-sonnet-5-5"`. |
+| `model` | string, not empty | Yes | The provider's model id, e.g. `"claude-sonnet-5-5"`. |
 | `effort` | `"low"`, `"medium"`, `"high"` | No | How hard the model thinks. Defaults to `"medium"`. |
 | `tools` | string[] | No | Tool ids the agent uses, e.g. `["files"]`. Defaults to `[]`. |
 
@@ -62,9 +62,9 @@ The full version is [`flows/landing-page.json`](../flows/landing-page.json).
 | Field | Type | Required | Meaning |
 |---|---|---|---|
 | `id` | id | Yes | Unique step id, e.g. `"draft-page"`. |
-| `agent` | string | Yes | The `id` of the agent that does this step. |
-| `task` | string | Yes | A short name for the card, e.g. `"Draft pricing page"`. |
-| `prompt` | string | Yes | What the agent is told to do, in plain language: what to make, from what, and where to save it. Earlier steps' results are passed along automatically. |
+| `agent` | string, not empty | Yes | The `id` of the agent that does this step. |
+| `task` | string, not empty | Yes | A short name for the card, e.g. `"Draft pricing page"`. |
+| `prompt` | string, not empty | Yes | What the agent is told to do, in plain language: what to make, from what, and where to save it. Earlier steps' results are passed along automatically. |
 | `stage` | integer ≥ 0 | Yes | Steps in the same stage run at the same time. A stage starts when every step in the stage before it is done. |
 | `tools` | string[] | No | Replaces the agent's tools for this step. |
 | `approval` | `"never"`, `"always"`, `"earned"` | No | When to ask you before acting. Defaults to `"never"`. |
@@ -93,7 +93,7 @@ In a real run, a step that asks pauses before its first file write, edit or move
 - Stages count up from 0 without gaps: `0, 1, 2`, not `0, 2`.
 - Unknown fields are rejected, so typos don't pass silently.
 
-The checker also gives **notes** that don't block saving, for things that won't work the way the writer probably expects in a real run:
+The checker also gives **notes** that don't block saving, for things that won't work the way the writer probably expects in a real run. They come from `flowWarnings` in [`runner/flows.ts`](../runner/flows.ts), which `check-flow`, `save_flow` and the app's save all call:
 
 - An agent on a provider other than Anthropic, which only runs in simulated mode.
 - A model OpenWove doesn't know, which has no cost and may fail.

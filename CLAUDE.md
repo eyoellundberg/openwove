@@ -9,7 +9,7 @@ A friendly place to see and tweak multi-agent flows. A person's own agent writes
 - `npm run check-flow flows/<file>.json` — validate a flow file.
 - `npm run mcp` — the MCP server a person's agent connects to (stdio; `.mcp.json` registers it for Claude Code here).
 - `npm run site` / `npm run site:build` — the marketing site in `site/` (React, built with the app's theme and shadcn components through `@/`; output in `dist-site/`).
-- `npx tsc -b && npm run lint && npm run build && npm run site:build` — what CI checks; run it before committing.
+- `npx tsc -b && npm run lint && npm run build && npm run site:build` — what CI checks (plus `check-flow` on every file in `flows/`); run it before committing.
 
 ## Docs
 
@@ -22,6 +22,7 @@ When someone asks for multi-agent work, follow `skills/openwove-builder/SKILL.md
 ## Code
 
 - `src/lib/flow-file.ts` is the flow format (zod), shared by the app, the runner and `scripts/check-flow.ts`. Keep it free of app imports.
+- `src/lib/runner-types.ts` holds the shapes the runner sends and accepts (`/health`, `/status`, `/flows`, app events, `Resolution`), imported by both `runner/` and `src/lib/runner-client.ts`. Don't redeclare them on either side.
 - `src/lib/engine.ts` holds the run logic as pure functions; `src/lib/store.ts` (zustand) wraps it. Runner events arrive through `applyRunnerEvent`.
 - `src/lib/models.ts` has model prices. Anthropic prices are list prices; others are marked as examples and show with "~".
 - `runner/` is a small Node server: it runs stages, calls the Anthropic API, connects the `files` tool through the filesystem MCP server, and pauses at approvals.

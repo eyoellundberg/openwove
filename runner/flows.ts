@@ -4,16 +4,12 @@ import { basename, join, resolve } from 'node:path'
 import { RUNNABLE_TOOLS } from '../src/lib/catalog'
 import { type FlowFile, parseFlow } from '../src/lib/flow-file'
 import { MODELS } from '../src/lib/models'
+import type { FlowListing } from '../src/lib/runner-types'
 
 export const ROOT = resolve(import.meta.dirname, '..')
 export const FLOWS = join(ROOT, 'flows')
 export const WORKSPACE = join(ROOT, 'workspace')
 export const RUNNER_PORT = Number(process.env.RUNNER_PORT ?? 5189)
-
-export interface FlowListing {
-  file: string
-  name: string
-}
 
 /** A safe file name inside flows/, from a given name or the flow's own name. */
 export function flowFileName(nameOrFile: string): string {

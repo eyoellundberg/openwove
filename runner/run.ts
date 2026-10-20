@@ -2,6 +2,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { askChance, type RunnerEvent } from '../src/lib/engine'
 import type { FlowAgent, FlowFile, FlowStep } from '../src/lib/flow-file'
+import type { Resolution } from '../src/lib/runner-types'
 import type { StoredRun } from '../src/lib/usage'
 import { ACTING_TOOLS, filesTool } from './files-tool'
 
@@ -15,8 +16,6 @@ export const API_TRIES = 3
 const FALLBACK_MODELS = new Set(['claude-opus-5-5', 'claude-sonnet-5-5'])
 
 type Listener = (e: RunnerEvent) => void
-/** What you can tell a step that ran into trouble. */
-export type Resolution = 'retry' | 'skip' | 'stop'
 
 export class Run {
   readonly events: RunnerEvent[] = []

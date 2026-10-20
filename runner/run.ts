@@ -2,6 +2,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { askChance, type RunnerEvent } from '../src/lib/engine'
 import type { FlowAgent, FlowFile, FlowStep } from '../src/lib/flow-file'
+import type { StoredRun } from '../src/lib/usage'
 import { ACTING_TOOLS, filesTool } from './files-tool'
 
 /** Enough room for a full page of HTML in one reply. */
@@ -28,12 +29,24 @@ export class Run {
   private streaks: Record<string, number>
   private workspace: string
   private client: Anthropic
+  private startedAt = Date.now()
+  private endedAt: number | null = null
+  readonly id: string
+  /** Called after every event, so the run can be saved as it goes. */
+  private onChange?: () => void
 
-  constructor(flow: FlowFile, streaks: Record<string, number>, workspace: string, client: Anthropic) {
+  constructor(id: string, flow: FlowFile, streaks: Record<string, number>, workspace: string, client: Anthropic, onChange?: (run: Run) => void) {
+    this.id = id
     this.flow = flow
     this.streaks = streaks
     this.workspace = workspace
     this.client = client
+    this.onChange = onChange && (() => onChange(this))
+  }
+
+  /** The run as it can be saved and read back later. */
+  toStored(): StoredRun {
+    return { id: this.id, startedAt: this.startedAt, endedAt: this.endedAt, flow: this.flow, events: this.events }
   }
 
   subscribe(listener: Listener) {
@@ -68,7 +81,9 @@ export class Run {
 
   private emit(e: RunnerEvent) {
     this.events.push(e)
+    if (e.type === 'run_done') this.endedAt = Date.now()
     for (const listener of this.listeners) listener(e)
+    this.onChange?.()
   }
 
   async start() {

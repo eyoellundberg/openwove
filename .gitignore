@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 workspace/site/
 .env.local
+# Runs saved by the local runner
+runs/

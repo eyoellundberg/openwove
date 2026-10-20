@@ -1,6 +1,7 @@
 /** Talks to the local runner (`npm run runner`), which Vite proxies under /api. */
 import type { RunnerEvent } from './engine'
 import type { FlowFile } from './flow-file'
+import type { RunSummary } from './usage'
 import type { Provider } from './types'
 
 export interface RunnerHealth {
@@ -69,6 +70,8 @@ export const runner = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ stepId, action }),
     }).then((r) => json<{ ok: true }>(r)),
+  /** What every saved run cost, newest first. */
+  runs: () => fetch('/api/runs').then((r) => json<RunSummary[]>(r)),
   status: () => fetch('/api/status').then((r) => json<{ anthropic: ProviderStatus }>(r)).then((s) => s.anthropic),
   stop: (runId: string) => fetch(`/api/runs/${runId}/stop`, { method: 'POST' }).then((r) => json<{ ok: true }>(r)),
   /** Whether the runner still knows a run. It forgets them when it restarts. */

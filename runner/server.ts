@@ -5,7 +5,9 @@ import { join } from 'node:path'
 import Anthropic from '@anthropic-ai/sdk'
 import { parseFlow } from '../src/lib/flow-file'
 import { listFlows, readFlow, ROOT, RUNNER_PORT as PORT, saveFlow, WORKSPACE } from './flows'
+import { summarize, type StoredRun } from '../src/lib/usage'
 import { API_TRIES, Run, type Resolution } from './run'
+import { loadRuns, saveRun } from './run-store'
 import { claudeStatus } from './status'
 
 if (existsSync(join(ROOT, '.env.local'))) process.loadEnvFile(join(ROOT, '.env.local'))
@@ -14,6 +16,8 @@ mkdirSync(WORKSPACE, { recursive: true })
 const hasAnthropic = Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN)
 const client = hasAnthropic ? new Anthropic({ maxRetries: API_TRIES - 1 }) : null
 const runs = new Map<string, Run>()
+/** Runs saved by an earlier runner, or by this one before it was restarted. */
+const stored = new Map<string, StoredRun>(loadRuns().map((r) => [r.id, r]))
 let runCounter = 0
 
 /** Open app windows, listening for "your agent saved a flow". */
@@ -85,14 +89,31 @@ const server = createServer(async (req, res) => {
       const parsed = parseFlow(body?.flow)
       if (!parsed.ok) return send(res, 400, { error: `The flow has a problem. ${parsed.error}` })
       const id = `live-${Date.now().toString(36)}-${++runCounter}`
-      const run = new Run(parsed.flow, body.streaks ?? {}, WORKSPACE, client)
+      const run = new Run(id, parsed.flow, body.streaks ?? {}, WORKSPACE, client, (r) => saveRun(r.toStored()))
       runs.set(id, run)
       run.start().catch((error) => console.error(`Run ${id} crashed:`, error))
       return send(res, 200, { runId: id })
     }
 
+    // What every run cost, newest first, from this runner and from before it was restarted.
+    if (req.method === 'GET' && url.pathname === '/runs') {
+      const all = new Map(stored)
+      runs.forEach((r) => all.set(r.id, r.toStored()))
+      return send(res, 200, [...all.values()].map(summarize).sort((a, b) => b.startedAt - a.startedAt))
+    }
+
     const run = parts[0] === 'runs' ? runs.get(parts[1]) : undefined
-    if (parts[0] === 'runs' && !run) return send(res, 404, { error: 'That run isn’t known to this runner. It may have restarted.' })
+    if (parts[0] === 'runs' && !run) {
+      const old = stored.get(parts[1])
+      if (old && req.method === 'GET' && parts[2] === 'events') {
+        // A finished run replays what happened. The stream stays open, like a live one, so the browser doesn't keep reconnecting.
+        res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' })
+        old.events.forEach((e) => res.write(`data: ${JSON.stringify(e)}\n\n`))
+        return
+      }
+      if (old) return send(res, 409, { error: 'That run has ended.' })
+      return send(res, 404, { error: 'That run isn’t known to this runner.' })
+    }
 
     if (run && req.method === 'GET' && parts[2] === 'events') {
       res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' })

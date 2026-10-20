@@ -74,7 +74,8 @@ Write from the person's side, plainly:
 
 ## Git
 
-- `main` is always releasable. Work on a branch, and merge when CI passes. Don't rewrite `main`'s history.
+- Commit straight to `main` and push once the pre-commit command above passes. No pull requests: nobody reviews them, and CI runs on every push to `main` anyway. Don't rewrite `main`'s history.
+- Use a branch only for work you want to leave half done, and fast-forward it into `main` when it's ready.
 - Keep commits focused, one change each, so they're easy to review and to revert.
 - Commit messages: a subject in the imperative that says what changed for the person using it, under about 72 characters, e.g. "Ask what to do when a step fails". Add a body when the why isn't obvious.
 - Never commit `.env.local`, `runs/`, `dist/`, `dist-site/`, or agent output in `workspace/`. `.gitignore` covers all of them.

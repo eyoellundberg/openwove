@@ -36,5 +36,6 @@ When someone asks for multi-agent work, follow `skills/openwove-builder/SKILL.md
 
 ## Git
 
+- Commit straight to `main` and push once the CI command above passes. No pull requests.
 - Commit subjects are imperative and say what changed for the person, e.g. "Ask what to do when a step fails".
 - Don't commit agent output in `workspace/` or saved runs in `runs/`; `.gitignore` covers them.

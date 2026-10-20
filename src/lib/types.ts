@@ -69,6 +69,10 @@ export interface Task {
   /** Driven by the real runner instead of the simulation. */
   live?: boolean
   waitingSince?: number
+  /** What went wrong, while the step waits for you to retry, skip or stop. Kept if you skip it. */
+  problem?: string
+  /** Which try the problem came from. */
+  attempt?: number
 }
 
 export type RunCell = 'asked' | 'acted'

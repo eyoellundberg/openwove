@@ -200,6 +200,8 @@ export type RunnerEvent =
   | { type: 'step_log'; stepId: string; text: string }
   | { type: 'step_usage'; stepId: string; inputTokens: number; outputTokens: number }
   | { type: 'step_waiting'; stepId: string; gateText: string }
+  | { type: 'step_problem'; stepId: string; error: string; attempt: number }
+  | { type: 'step_stopped'; stepId: string }
   | { type: 'step_acted_alone'; stepId: string }
   | { type: 'step_resumed'; stepId: string }
   | { type: 'step_done'; stepId: string }
@@ -224,8 +226,12 @@ export function applyRunnerEvent(sim: Sim, runId: string, e: RunnerEvent): Sim {
         return { ...t, state: 'waiting', asked: true, gatePassed: true, gateText: e.gateText, waitingSince: sim.simT }
       case 'step_acted_alone':
         return { ...t, actedAlone: true, gatePassed: true }
+      case 'step_problem':
+        return { ...t, state: 'waiting', problem: e.error, attempt: e.attempt, waitingSince: sim.simT }
       case 'step_resumed':
-        return { ...t, state: 'running' }
+        return { ...t, state: 'running', problem: undefined }
+      case 'step_stopped':
+        return { ...t, state: 'stopped', end: t.start == null ? null : sim.simT }
       case 'step_done':
         return { ...t, state: 'done', end: sim.simT }
       case 'step_denied':

@@ -11,6 +11,8 @@ export function WaitingTray({ flashId }: { flashId: string | null }) {
   const tasks = useFlow((s) => s.tasks)
   const steps = useFlow((s) => s.steps)
   const decide = useFlow((s) => s.decide)
+  const resolveProblem = useFlow((s) => s.resolveProblem)
+  const claude = useFlow((s) => s.claudeStatus)
   const agents = useFlow((s) => s.agents)
   const waiting = tasks.filter((t) => t.state === 'waiting')
 
@@ -25,6 +27,41 @@ export function WaitingTray({ flashId }: { flashId: string | null }) {
       {waiting.map((t) => {
         const step = steps.find((s) => s.id === t.stepId)
         const toEarn = step?.approval === 'earned' ? EARN_AFTER - step.streak : 0
+        if (t.problem != null) {
+          return (
+            <div
+              key={t.id}
+              id={`ask-${t.id}`}
+              className={cn(
+                'flex flex-wrap items-center gap-3 rounded-lg bg-failed-subtle px-3 py-2 animate-in fade-in slide-in-from-bottom-1',
+                flashId === t.id && 'ring-2 ring-failed',
+              )}
+            >
+              <AgentAvatar agent={t.agent} size="sm" />
+              <div className="min-w-0 flex-1">
+                <p>
+                  <span className="font-semibold">{findAgent(agents, t.agent).name}</span> got stuck on {t.label}
+                </p>
+                <p className="text-sm">{t.problem}</p>
+                <p className="text-xs text-muted-foreground tabular-nums">
+                  Try {t.attempt ?? 1} · waiting {formatMinutes(now - (t.waitingSince ?? now))}
+                  {claude && claude.level !== 'ok' && claude.level !== 'unknown' && (
+                    <span className="text-failed"> · Claude is {claude.text.toLowerCase()} right now{claude.incident ? `: ${claude.incident}` : ''}</span>
+                  )}
+                </p>
+              </div>
+              <Button size="sm" variant="ghost" onClick={() => resolveProblem(t.id, 'stop')}>
+                Stop the run
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => resolveProblem(t.id, 'skip')}>
+                Skip this step
+              </Button>
+              <Button size="sm" onClick={() => resolveProblem(t.id, 'retry')} data-retry={t.id}>
+                Try again
+              </Button>
+            </div>
+          )
+        }
         return (
           <div
             key={t.id}

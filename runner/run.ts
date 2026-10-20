@@ -8,15 +8,20 @@ import { ACTING_TOOLS, filesTool } from './files-tool'
 const MAX_TOKENS = 16_000
 /** A step that keeps calling tools this many times is stuck. */
 const MAX_TURNS = 24
+/** Tries per API call (the first plus retries) for temporary errors like rate limits and overloads, with a pause between. Then it asks you. */
+export const API_TRIES = 3
 /** Models with a server-side fallback for refusals. */
 const FALLBACK_MODELS = new Set(['claude-opus-5-5', 'claude-sonnet-5-5'])
 
 type Listener = (e: RunnerEvent) => void
+/** What you can tell a step that ran into trouble. */
+export type Resolution = 'retry' | 'skip' | 'stop'
 
 export class Run {
   readonly events: RunnerEvent[] = []
   private listeners = new Set<Listener>()
   private decisions = new Map<string, (approve: boolean) => void>()
+  private problems = new Map<string, (action: Resolution) => void>()
   private stopped = false
   private outputs: { step: FlowStep; text: string }[] = []
   private flow: FlowFile
@@ -44,10 +49,21 @@ export class Run {
     return true
   }
 
+  /** Your answer to a step that ran into trouble. False when it isn't waiting for one. */
+  resolve(stepId: string, action: Resolution) {
+    const resolve = this.problems.get(stepId)
+    if (!resolve) return false
+    this.problems.delete(stepId)
+    resolve(action)
+    return true
+  }
+
   stop() {
     this.stopped = true
     for (const resolve of this.decisions.values()) resolve(false)
     this.decisions.clear()
+    for (const resolve of this.problems.values()) resolve('stop')
+    this.problems.clear()
   }
 
   private emit(e: RunnerEvent) {
@@ -63,8 +79,12 @@ export class Run {
         steps.forEach((s) => this.emit({ type: 'step_skipped', stepId: s.id }))
         continue
       }
-      const results = await Promise.all(steps.map((s) => this.runStep(s)))
-      if (results.some((ok) => !ok)) this.stopped = true
+      // One step giving up stops its neighbours too, so nothing keeps spending after the run is over.
+      await Promise.all(
+        steps.map(async (s) => {
+          if (!(await this.runStep(s))) this.stop()
+        }),
+      )
     }
     this.emit({ type: 'run_done' })
   }
@@ -83,13 +103,34 @@ export class Run {
     const missing = wanted.filter((t) => t !== 'files')
     if (missing.length) this.emit({ type: 'step_log', stepId: step.id, text: `Not connected, skipped: ${missing.join(', ')}` })
 
-    try {
-      const files = wanted.includes('files') ? await filesTool(this.workspace) : null
-      return await this.loop(step, agent, files)
-    } catch (error) {
-      this.emit({ type: 'step_failed', stepId: step.id, error: describe(error) })
-      return false
+    for (let attempt = 1; ; attempt++) {
+      try {
+        const files = wanted.includes('files') ? await filesTool(this.workspace) : null
+        return await this.loop(step, agent, files)
+      } catch (error) {
+        if (this.stopped) {
+          this.emit({ type: 'step_stopped', stepId: step.id })
+          return false
+        }
+        const message = describe(error)
+        const action = await this.problem(step, message, attempt)
+        if (action === 'retry') continue
+        if (action === 'skip') {
+          this.emit({ type: 'step_skipped', stepId: step.id })
+          return true
+        }
+        this.emit({ type: 'step_failed', stepId: step.id, error: message })
+        return false
+      }
     }
+  }
+
+  /** The step hit something it can't get past alone. Wait for you to say what to do. */
+  private async problem(step: FlowStep, error: string, attempt: number): Promise<Resolution> {
+    this.emit({ type: 'step_problem', stepId: step.id, error, attempt })
+    const action = await new Promise<Resolution>((resolve) => this.problems.set(step.id, resolve))
+    if (action === 'retry') this.emit({ type: 'step_resumed', stepId: step.id })
+    return action
   }
 
   private async loop(step: FlowStep, agent: FlowAgent, files: Awaited<ReturnType<typeof filesTool>> | null) {
@@ -103,7 +144,10 @@ export class Run {
     let gated = step.approval === 'never'
 
     for (let turn = 0; turn < MAX_TURNS; turn++) {
-      if (this.stopped) return false
+      if (this.stopped) {
+        this.emit({ type: 'step_stopped', stepId: step.id })
+        return false
+      }
       const response = await this.client.beta.messages.create({
         model: agent.model,
         max_tokens: MAX_TOKENS,
@@ -212,9 +256,20 @@ function logLine(call: Anthropic.Beta.BetaToolUseBlock, failed: boolean) {
   return `${failed ? 'Could not: ' : ''}${verb[call.name] ?? call.name} ${target}`.trim()
 }
 
+/** The plain message inside Anthropic's error body, without the JSON around it. */
+function apiMessage(error: InstanceType<typeof Anthropic.APIError>) {
+  const body = error.error as { error?: { message?: string } } | undefined
+  return body?.error?.message ?? error.message
+}
+
 function describe(error: unknown) {
   if (error instanceof Anthropic.AuthenticationError) return 'The Anthropic API key was rejected. Check ANTHROPIC_API_KEY in .env.local.'
-  if (error instanceof Anthropic.RateLimitError) return 'Rate limited by the Anthropic API. Try again in a minute.'
-  if (error instanceof Anthropic.APIError) return `Anthropic API error ${error.status}: ${error.message}`
+  if (error instanceof Anthropic.NotFoundError) return `Claude doesn’t have that model for your key (${apiMessage(error)}).`
+  if (error instanceof Anthropic.RateLimitError) return `Claude is rate limiting this key, even after ${API_TRIES} tries. Give it a minute.`
+  if (error instanceof Anthropic.APIConnectionError) return `Couldn’t reach Claude after ${API_TRIES} tries. Check your connection.`
+  if (error instanceof Anthropic.APIError && (error.status ?? 0) >= 500) {
+    return `Claude is struggling (error ${error.status}) and kept failing after ${API_TRIES} tries.`
+  }
+  if (error instanceof Anthropic.APIError) return `Anthropic API error ${error.status}: ${apiMessage(error)}`
   return error instanceof Error ? error.message : String(error)
 }

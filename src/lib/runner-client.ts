@@ -18,6 +18,16 @@ export interface AppEvent {
   open: boolean
 }
 
+/** Whether Claude is up, from Anthropic's status page via the runner. */
+export interface ProviderStatus {
+  level: 'ok' | 'slow' | 'down' | 'unknown'
+  text: string
+  incident?: string
+}
+
+/** What you can tell a step that ran into trouble. */
+export type Resolution = 'retry' | 'skip' | 'stop'
+
 export interface FlowListing {
   file: string
   name: string
@@ -53,6 +63,13 @@ export const runner = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ stepId, approve }),
     }).then((r) => json<{ ok: true }>(r)),
+  resolve: (runId: string, stepId: string, action: Resolution) =>
+    fetch(`/api/runs/${runId}/resolve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stepId, action }),
+    }).then((r) => json<{ ok: true }>(r)),
+  status: () => fetch('/api/status').then((r) => json<{ anthropic: ProviderStatus }>(r)).then((s) => s.anthropic),
   stop: (runId: string) => fetch(`/api/runs/${runId}/stop`, { method: 'POST' }).then((r) => json<{ ok: true }>(r)),
   /** Whether the runner still knows a run. It forgets them when it restarts. */
   async knowsRun(runId: string): Promise<boolean> {

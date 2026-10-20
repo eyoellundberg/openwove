@@ -9,6 +9,7 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useAnimationFrame } from '@/hooks/use-animation-frame'
 import { useColorMode } from '@/hooks/use-color-mode'
+import { STATUS_POLL_MS } from '@/lib/constants'
 import { useFlow } from '@/lib/store'
 
 // The canvas (React Flow) is the heaviest part, so it loads the first time Set up opens.
@@ -20,11 +21,18 @@ export default function App() {
   const colorMode = useColorMode()
   const checkRunner = useFlow((s) => s.checkRunner)
   const resumeRun = useFlow((s) => s.resumeRun)
+  const checkClaude = useFlow((s) => s.checkClaude)
 
   useEffect(() => {
     checkRunner()
     resumeRun()
   }, [checkRunner, resumeRun])
+
+  useEffect(() => {
+    checkClaude()
+    const timer = setInterval(checkClaude, STATUS_POLL_MS)
+    return () => clearInterval(timer)
+  }, [checkClaude])
 
   useAnimationFrame(frame)
   useEffect(() => {

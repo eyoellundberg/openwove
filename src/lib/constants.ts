@@ -11,6 +11,8 @@ export const SIM_INPUT_TOKENS_PER_MINUTE = 9_000
 export const SIM_OUTPUT_TOKENS_PER_MINUTE = 900
 /** How long to wait before listening for your agent's flows again after the runner drops. */
 export const APP_EVENTS_RETRY_MS = 5_000
+/** How often the sidebar asks whether Claude is up. */
+export const STATUS_POLL_MS = 60_000
 /** Ignore long frame gaps (a hidden tab) so time doesn't jump. */
 export const MAX_FRAME_SECONDS = 0.1
 /** Pause between one stage finishing and the next starting, in simulated minutes. */

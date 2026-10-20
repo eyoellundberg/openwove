@@ -28,7 +28,7 @@ export function stepStatusLine(t: Task | undefined, now: number): string {
     case 'done':
       return `Done in ${formatMinutes(elapsed(t, now))} · ${formatCost(taskCost(t), taskEstimated(t))}${t.actedAlone ? ' · didn’t need to ask' : ''}`
     case 'skipped':
-      return 'Skipped: an earlier step didn’t finish'
+      return t.problem ? 'Skipped by you' : 'Skipped: an earlier step didn’t finish'
     default:
       return STATE_NAME[t.state]
   }

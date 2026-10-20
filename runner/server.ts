@@ -5,13 +5,14 @@ import { join } from 'node:path'
 import Anthropic from '@anthropic-ai/sdk'
 import { parseFlow } from '../src/lib/flow-file'
 import { listFlows, readFlow, ROOT, RUNNER_PORT as PORT, saveFlow, WORKSPACE } from './flows'
-import { Run } from './run'
+import { API_TRIES, Run, type Resolution } from './run'
+import { claudeStatus } from './status'
 
 if (existsSync(join(ROOT, '.env.local'))) process.loadEnvFile(join(ROOT, '.env.local'))
 mkdirSync(WORKSPACE, { recursive: true })
 
 const hasAnthropic = Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN)
-const client = hasAnthropic ? new Anthropic() : null
+const client = hasAnthropic ? new Anthropic({ maxRetries: API_TRIES - 1 }) : null
 const runs = new Map<string, Run>()
 let runCounter = 0
 
@@ -43,6 +44,8 @@ const server = createServer(async (req, res) => {
         root: ROOT,
       })
     }
+
+    if (req.method === 'GET' && url.pathname === '/status') return send(res, 200, { anthropic: await claudeStatus() })
 
     if (req.method === 'GET' && url.pathname === '/flows') return send(res, 200, listFlows())
 
@@ -103,6 +106,13 @@ const server = createServer(async (req, res) => {
     if (run && req.method === 'POST' && parts[2] === 'decide') {
       const { stepId, approve } = (await readJson(req)) as { stepId: string; approve: boolean }
       if (!run.decide(stepId, Boolean(approve))) return send(res, 409, { error: 'That step isn’t waiting for you anymore.' })
+      return send(res, 200, { ok: true })
+    }
+
+    if (run && req.method === 'POST' && parts[2] === 'resolve') {
+      const { stepId, action } = (await readJson(req)) as { stepId: string; action: Resolution }
+      if (!['retry', 'skip', 'stop'].includes(action)) return send(res, 400, { error: 'Say retry, skip or stop.' })
+      if (!run.resolve(stepId, action)) return send(res, 409, { error: 'That step isn’t waiting for you anymore.' })
       return send(res, 200, { ok: true })
     }
 

@@ -133,15 +133,46 @@ function RunnerStatus() {
   )
 }
 
+const CLAUDE_DOT = {
+  ok: 'bg-earned',
+  slow: 'bg-waiting',
+  down: 'bg-failed',
+  unknown: 'bg-border',
+}
+
+/** Whether Claude itself is up, so a failing step isn't a mystery. */
+function ClaudeStatus() {
+  const claude = useFlow((s) => s.claudeStatus)
+  const runnerReady = useFlow((s) => s.runnerStatus.state === 'ready')
+  if (!runnerReady || !claude) return null
+
+  return (
+    <div
+      className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden"
+      title={claude.incident}
+    >
+      <StatusDot className={CLAUDE_DOT[claude.level]} />
+      Claude: {claude.text}
+    </div>
+  )
+}
+
 export function AppSidebar() {
   const view = useFlow((s) => s.view)
   const setView = useFlow((s) => s.setView)
   const waiting = useFlow((s) => s.tasks.filter((t) => t.state === 'waiting').length)
   const openSetup = useFlow((s) => s.openSetup)
   const checkRunner = useFlow((s) => s.checkRunner)
+  const checkClaude = useFlow((s) => s.checkClaude)
 
   return (
-    <Sidebar collapsible="icon" onMouseEnter={checkRunner}>
+    <Sidebar
+      collapsible="icon"
+      onMouseEnter={() => {
+        checkRunner()
+        checkClaude()
+      }}
+    >
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-1.5 font-semibold tracking-tight">
           <WorkflowIcon className="size-5 shrink-0" />
@@ -173,6 +204,7 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <RunnerStatus />
+        <ClaudeStatus />
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Connect your agent" onClick={() => openSetup(true)}>

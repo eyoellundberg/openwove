@@ -10,7 +10,7 @@ import {
 } from './constants'
 import { flowToState, stateToFlow } from './convert'
 import * as engine from './engine'
-import { runner, type AppEvent, type FlowListing, type RunnerHealth } from './runner-client'
+import { runner, type AppEvent, type FlowListing, type ProviderStatus, type Resolution, type RunnerHealth } from './runner-client'
 import { initialHistory, makeStep, SAMPLE_FLOW } from './seed'
 import type { Agent, RunMode, Step, View } from './types'
 
@@ -21,6 +21,8 @@ interface FlowStore extends engine.Sim {
   request: string
   mode: RunMode
   runnerStatus: RunnerStatus
+  /** Whether Claude is up; null until the runner has answered once. */
+  claudeStatus: ProviderStatus | null
   flowFiles: FlowListing[]
   /** The file in flows/ this flow came from, if any. */
   file: string | null
@@ -43,6 +45,9 @@ interface FlowStore extends engine.Sim {
   resumeRun: () => Promise<void>
   togglePause: () => void
   decide: (taskId: string, approve: boolean) => void
+  /** Tell a step that ran into trouble to try again, move on without it, or stop the run. */
+  resolveProblem: (taskId: string, action: Resolution) => void
+  checkClaude: () => Promise<void>
   fastForward: () => void
   updateStep: (id: string, patch: Partial<Step>) => void
   addStep: () => void
@@ -138,6 +143,7 @@ export const useFlow = create<FlowStore>()((set, get) => {
     request: sample.request,
     mode: 'simulated',
     runnerStatus: { state: 'checking' },
+    claudeStatus: null,
     flowFiles: [],
     file: null,
     unsaved: false,
@@ -211,6 +217,21 @@ export const useFlow = create<FlowStore>()((set, get) => {
       set(engine.decide(sim(s), taskId, approve))
       if (task?.live && task.runId && task.stepId) {
         runner.decide(task.runId, task.stepId, approve).catch((error: Error) => set({ notice: error.message }))
+      }
+    },
+
+    resolveProblem: (taskId, action) => {
+      const task = get().tasks.find((t) => t.id === taskId)
+      if (!task?.live || !task.runId || !task.stepId) return
+      // The step stays waiting until the runner confirms what happened next.
+      runner.resolve(task.runId, task.stepId, action).catch((error: Error) => set({ notice: error.message }))
+    },
+
+    checkClaude: async () => {
+      try {
+        set({ claudeStatus: await runner.status() })
+      } catch {
+        set({ claudeStatus: null })
       }
     },
 

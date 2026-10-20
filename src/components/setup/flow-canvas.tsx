@@ -6,6 +6,7 @@ import {
   useNodesInitialized,
   useNodesState,
   useReactFlow,
+  useStore,
   type Edge,
   type NodeTypes,
   type OnNodeDrag,
@@ -13,6 +14,7 @@ import {
 import { useEffect, useMemo } from 'react'
 import { useColorMode } from '@/hooks/use-color-mode'
 import {
+  CANVAS_MIN_ZOOM,
   FIT_DURATION_MS,
   FIT_PADDING,
   JOIN_STAGE_TOLERANCE,
@@ -82,13 +84,14 @@ export function FlowCanvas() {
   }, [laidOut, setNodes])
 
   const stageCount = laidOut.length && Math.max(...laidOut.map((n) => n.position.x)) / STAGE_WIDTH + 1
-  // Refit when a stage is added or removed, after React Flow has measured the new card.
+  // Refit when a stage is added or removed, or the canvas changes width (the sidebar opening), after React Flow has measured the cards.
   const measured = useNodesInitialized()
+  const width = useStore((s) => s.width)
   useEffect(() => {
     if (!measured) return
-    const frame = requestAnimationFrame(() => fitView({ duration: FIT_DURATION_MS, padding: FIT_PADDING }))
+    const frame = requestAnimationFrame(() => fitView({ duration: FIT_DURATION_MS, padding: FIT_PADDING, minZoom: CANVAS_MIN_ZOOM }))
     return () => cancelAnimationFrame(frame)
-  }, [measured, stageCount, fitView])
+  }, [measured, stageCount, width, fitView])
 
   const edges = useMemo<Edge[]>(() => {
     const state = new Map(runStates.split('|').map((kv) => kv.split('=') as [string, string]))
@@ -125,7 +128,8 @@ export function FlowCanvas() {
       onNodeDragStop={onNodeDragStop}
       colorMode={colorMode}
       fitView
-      fitViewOptions={{ padding: FIT_PADDING }}
+      fitViewOptions={{ padding: FIT_PADDING, minZoom: CANVAS_MIN_ZOOM }}
+      minZoom={CANVAS_MIN_ZOOM}
       nodesConnectable={false}
       edgesFocusable={false}
       proOptions={{ hideAttribution: true }}

@@ -6,7 +6,6 @@ import { Notice } from '@/components/shared/notice'
 import { Button } from '@/components/ui/button'
 import { useFlow } from '@/lib/store'
 import { FlowCanvas } from './flow-canvas'
-import { FlowMenu } from './flow-menu'
 
 export function SetupView() {
   const name = useFlow((s) => s.name)
@@ -42,7 +41,6 @@ export function SetupView() {
               {file ? 'Save changes' : 'Save to flows'}
             </Button>
           )}
-          <FlowMenu />
           <Button variant="outline" onClick={() => openSetup(true)}>
             <SparklesIcon />
             Set up with your agent

@@ -42,3 +42,5 @@ export const JOIN_STAGE_TOLERANCE = 0.3
 /** fitView animation and padding. */
 export const FIT_DURATION_MS = 500
 export const FIT_PADDING = 0.25
+/** How far the canvas can zoom out, so a long flow still fits in a narrow window. */
+export const CANVAS_MIN_ZOOM = 0.2

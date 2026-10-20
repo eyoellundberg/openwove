@@ -1,0 +1,70 @@
+# Runner API
+
+The runner ([`runner/server.ts`](../runner/server.ts)) is a small HTTP server on `localhost:5189`; set `RUNNER_PORT` to change it. The app reaches it at `/api/...`, which Vite proxies to the runner with the `/api` prefix removed.
+
+It listens on your computer only and has no authentication, so don't expose its port.
+
+Bodies are JSON. Errors come back as `{ "error": "A sentence you can show the person." }` with a 4xx or 5xx status.
+
+## Health and status
+
+| Method and path | Returns |
+|---|---|
+| `GET /health` | `{ providers: { anthropic, openai, google }, tools: ["files"], workspace, root }`. Each provider is `true` when it can run for real. |
+| `GET /status` | `{ anthropic: { level, text, incident?, checkedAt } }`, from Anthropic's public status page. `level` is `ok`, `slow`, `down` or `unknown`. Cached for 30 seconds. |
+
+## Flows
+
+| Method and path | Does |
+|---|---|
+| `GET /flows` | Lists `flows/` as `[{ file, name }]`. |
+| `GET /flows/:file` | Returns one flow file. 404 if it isn't there. |
+| `PUT /flows/:file` | Checks and saves a flow (the app's **Save changes**). 400 with every problem if it isn't valid. Returns `{ ok, file, warnings }`. |
+
+## App events
+
+| Method and path | Does |
+|---|---|
+| `GET /app-events` | An event stream for open app windows. Sends `{ type: "flow-saved", file, open }` when your agent saves a flow. |
+| `POST /app-events` | `{ file, open? }`. Used by the MCP server after a save; forwards `flow-saved` to every open window. Returns `{ apps }`, the number of windows told. |
+
+## Runs
+
+| Method and path | Does |
+|---|---|
+| `POST /runs` | `{ flow, streaks? }` starts a real run. `streaks` maps step ids to approvals in a row. Returns `{ runId }`. 400 if there's no API key or the flow isn't valid. |
+| `GET /runs` | Every run on this computer, newest first, with status, cost and per-step usage. This is what the **Usage** page shows. |
+| `GET /runs/:id/events` | The run's event stream. See below. |
+| `POST /runs/:id/decide` | `{ stepId, approve }` answers a step that's waiting for you. 409 if it isn't waiting anymore. |
+| `POST /runs/:id/resolve` | `{ stepId, action }` answers a step that ran into trouble. `action` is `retry`, `skip` or `stop`. 409 if it isn't waiting anymore. |
+| `POST /runs/:id/stop` | Stops the run. Waiting steps are denied, and later steps are skipped. |
+
+Run routes return 404 for a run this runner doesn't know, and 409 for one that has ended (except `events`, which replays it).
+
+## Run events
+
+`GET /runs/:id/events` is a [server-sent event](https://developer.mozilla.org/docs/Web/API/Server-sent_events) stream. It first replays what has already happened, then sends new events as they occur.
+
+Each event's `id` is its index in the run. On reconnect, the browser sends `Last-Event-ID` and gets only what it missed, so token counts and logs are never applied twice. A finished run loaded from disk replays without ids.
+
+| Event | Fields | Meaning |
+|---|---|---|
+| `step_started` | `stepId` | The step began. |
+| `step_log` | `stepId`, `text` | A line for the timeline, e.g. a file it read or wrote. |
+| `step_usage` | `stepId`, `inputTokens`, `outputTokens` | Tokens used by one API call. Add them up. |
+| `step_waiting` | `stepId`, `gateText` | Waiting for your approval. `gateText` reads after the agent's name. |
+| `step_acted_alone` | `stepId` | Would have asked, but its earned trust let it go ahead. |
+| `step_resumed` | `stepId` | Going again after an approval or a retry. |
+| `step_problem` | `stepId`, `error`, `attempt` | Ran into trouble. Waiting for retry, skip or stop. |
+| `step_done` | `stepId` | Finished. |
+| `step_denied` | `stepId` | You said no. The run stops. |
+| `step_failed` | `stepId`, `error` | Gave up. The run stops. |
+| `step_skipped` | `stepId` | Didn't run, because an earlier step stopped the run or you chose skip. |
+| `step_stopped` | `stepId` | Stopped mid-way, because you stopped the run or the runner shut down. |
+| `run_done` | | Nothing more will happen. |
+
+The event type lives in [`src/lib/engine.ts`](../src/lib/engine.ts) (`RunnerEvent`), and `applyRunnerEvent` is how the app applies each one.
+
+## Saved runs
+
+Every run is written to `runs/<id>.json` after each event, as `{ id, startedAt, endedAt, interrupted?, flow, events }`. A run that was going when the runner stopped is closed out as interrupted the next time it starts. `runs/` is ignored by git.

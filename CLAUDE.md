@@ -9,7 +9,11 @@ A friendly place to see and tweak multi-agent flows. A person's own agent writes
 - `npm run check-flow flows/<file>.json` — validate a flow file.
 - `npm run mcp` — the MCP server a person's agent connects to (stdio; `.mcp.json` registers it for Claude Code here).
 - `npm run site` / `npm run site:build` — the marketing site in `site/` (React, built with the app's theme and shadcn components through `@/`; output in `dist-site/`).
-- `npx tsc -b`, `npm run lint`, `npm run build` — check before committing.
+- `npx tsc -b && npm run lint && npm run build && npm run site:build` — what CI checks; run it before committing.
+
+## Docs
+
+`docs/` explains the architecture, flow format, MCP server, runner API and development rules. When a change touches the flow format, a runner route, an MCP tool or a command, update the matching doc in the same commit.
 
 ## Writing flows
 
@@ -28,3 +32,8 @@ When someone asks for multi-agent work, follow `skills/openwove-builder/SKILL.md
 - Build UI from the shadcn components in `src/components/ui` and the Tailwind scale. No arbitrary values like `w-[237px]`; add theme tokens in `src/index.css` and named constants in `src/lib/constants.ts` instead.
 - Status colors are tokens: `running`, `waiting`, `earned`, `failed` (each with `-subtle`).
 - Copy is plain and written from the user's side ("Waiting for you", not "Pending approvals").
+
+## Git
+
+- Commit subjects are imperative and say what changed for the person, e.g. "Ask what to do when a step fails".
+- Don't commit agent output in `workspace/` or saved runs in `runs/`; `.gitignore` covers them.

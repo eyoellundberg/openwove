@@ -1,9 +1,11 @@
 import { lazy, Suspense, useEffect } from 'react'
+import { LiveHeader } from '@/components/live/live-header'
 import { LiveView } from '@/components/live/live-view'
 import { AppSidebar } from '@/components/shell/app-sidebar'
 import { PromptDialog } from '@/components/setup/prompt-dialog'
+import { SetupHeader } from '@/components/setup/setup-header'
 import { SetupDialog } from '@/components/setup/setup-dialog'
-import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useAnimationFrame } from '@/hooks/use-animation-frame'
 import { useColorMode } from '@/hooks/use-color-mode'
@@ -34,10 +36,7 @@ export default function App() {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset className="h-dvh min-w-0">
-          <header className="flex shrink-0 items-center gap-2 px-4 pt-4 sm:px-6">
-            <SidebarTrigger />
-            <h1 className="text-sm font-medium text-muted-foreground">{view === 'live' ? 'Live' : 'Flow'}</h1>
-          </header>
+          {view === 'live' ? <LiveHeader /> : <SetupHeader />}
 
           <div className="flex min-h-0 flex-1 flex-col px-4 py-4 sm:px-6">
             {/* Mounted only while open, so React Flow measures the cards and fits them on arrival. */}

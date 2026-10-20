@@ -1,67 +1,22 @@
 import '@xyflow/react/dist/style.css'
 import { ReactFlowProvider } from '@xyflow/react'
-import { BotIcon, PlayIcon, PlusIcon, SaveIcon, SparklesIcon } from 'lucide-react'
-import { ModeSelect, RunnerNote } from '@/components/shared/mode-select'
+import { BotIcon } from 'lucide-react'
+import { RunnerNote } from '@/components/shared/mode-select'
 import { Notice } from '@/components/shared/notice'
 import { Button } from '@/components/ui/button'
 import { useFlow } from '@/lib/store'
 import { FlowCanvas } from './flow-canvas'
 
 export function SetupView() {
-  const name = useFlow((s) => s.name)
-  const request = useFlow((s) => s.request)
   const dirty = useFlow((s) => s.dirty)
-  const run = useFlow((s) => s.run)
-  const addStep = useFlow((s) => s.addStep)
-  const openSetup = useFlow((s) => s.openSetup)
-  const setView = useFlow((s) => s.setView)
-  const file = useFlow((s) => s.file)
   const unsaved = useFlow((s) => s.unsaved)
-  const runnerReady = useFlow((s) => s.runnerStatus.state === 'ready')
-  const saveToFile = useFlow((s) => s.saveToFile)
   const agentSaved = useFlow((s) => s.agentSaved)
   const openAgentSaved = useFlow((s) => s.openAgentSaved)
 
   return (
     <div className="flex h-full flex-col gap-3">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex min-w-0 flex-col gap-1">
-          <h2 className="text-base font-semibold">{name}</h2>
-          {request && (
-            <p className="text-sm text-muted-foreground">
-              Set up by your agent from <q className="text-foreground">{request}</q>
-            </p>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {dirty && <span className="text-xs text-waiting animate-in fade-in">Changes apply on the next run</span>}
-          {unsaved && runnerReady && (
-            <Button variant="outline" onClick={saveToFile}>
-              <SaveIcon />
-              {file ? 'Save changes' : 'Save to flows'}
-            </Button>
-          )}
-          <Button variant="outline" onClick={() => openSetup(true)}>
-            <SparklesIcon />
-            Set up with your agent
-          </Button>
-          <Button variant="outline" onClick={addStep}>
-            <PlusIcon />
-            Add step
-          </Button>
-          <ModeSelect />
-          <Button
-            onClick={async () => {
-              await run()
-              if (!useFlow.getState().notice) setView('live')
-            }}
-          >
-            <PlayIcon />
-            Run flow
-          </Button>
-        </div>
-      </div>
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-between gap-2 empty:hidden">
+        <span className="text-xs text-waiting animate-in fade-in">{dirty && 'Changes apply on the next run'}</span>
         <RunnerNote />
       </div>
       <Notice />

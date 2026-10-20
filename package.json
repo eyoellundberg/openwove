@@ -1,5 +1,5 @@
 {
-  "name": "agentflow",
+  "name": "openwove",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "check-flow": "tsx scripts/check-flow.ts",
     "runner": "tsx watch runner/server.ts",
-    "mcp": "tsx runner/mcp.ts"
+    "mcp": "tsx runner/mcp.ts",
+    "site": "vite --config vite.site.config.ts",
+    "site:build": "vite build --config vite.site.config.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",

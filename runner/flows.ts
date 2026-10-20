@@ -53,7 +53,7 @@ export function flowWarnings(flow: FlowFile): string[] {
   for (const a of flow.agents) {
     const known = MODELS.find((m) => m.id === a.model)
     if (a.provider !== 'anthropic') warnings.push(`${a.name} uses ${a.provider}, which only runs in simulated mode.`)
-    else if (!known) warnings.push(`${a.name}: "${a.model}" isn’t a model Agent Flow knows, so it has no cost and may fail in a real run.`)
+    else if (!known) warnings.push(`${a.name}: "${a.model}" isn’t a model OpenWove knows, so it has no cost and may fail in a real run.`)
     if (known && known.provider !== a.provider) warnings.push(`${a.name}: ${a.model} is a ${known.provider} model, not ${a.provider}.`)
   }
   const offline = new Set(flow.steps.flatMap((s) => s.tools ?? flow.agents.find((a) => a.id === s.agent)?.tools ?? []))

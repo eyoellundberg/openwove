@@ -117,9 +117,12 @@ const server = createServer(async (req, res) => {
 
     if (run && req.method === 'GET' && parts[2] === 'events') {
       res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' })
-      const write = (e: unknown) => res.write(`data: ${JSON.stringify(e)}\n\n`)
-      run.events.forEach(write)
-      const unsubscribe = run.subscribe(write)
+      // Each event carries its index, so a reconnecting EventSource gets only what it missed.
+      // Replaying everything would add step_usage tokens and step_log lines twice.
+      const write = (e: unknown, i: number) => res.write(`id: ${i}\ndata: ${JSON.stringify(e)}\n\n`)
+      const from = Number(req.headers['last-event-id'] ?? -1) + 1
+      run.events.slice(from).forEach((e, i) => write(e, from + i))
+      const unsubscribe = run.subscribe((e) => write(e, run.events.length - 1))
       req.on('close', unsubscribe)
       return
     }
@@ -149,7 +152,7 @@ const server = createServer(async (req, res) => {
 })
 
 server.listen(PORT, () => {
-  console.log(`Agent Flow runner on http://localhost:${PORT}`)
+  console.log(`OpenWove runner on http://localhost:${PORT}`)
   console.log(`Workspace: ${WORKSPACE}`)
   console.log(hasAnthropic ? 'Anthropic: ready' : 'Anthropic: no key. Add ANTHROPIC_API_KEY to .env.local.')
 })

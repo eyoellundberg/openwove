@@ -111,7 +111,7 @@ function ProviderRow({ provider }: { provider: (typeof PROVIDERS)[number] }) {
 
 function Models() {
   return (
-    <Group description="Put keys in the .env.local file next to the app. The runner reads them when it starts, and Agent Flow never stores them.">
+    <Group description="Put keys in the .env.local file next to the app. The runner reads them when it starts, and OpenWove never stores them.">
       <div className="flex flex-col gap-3">
         {PROVIDERS.map((p) => (
           <ProviderRow key={p.id} provider={p} />
@@ -170,12 +170,12 @@ function YourAgent() {
 }
 
 
-/** Nothing here works yet: there is nothing to bill while Agent Flow runs only on your computer. */
+/** Nothing here works yet: there is nothing to bill while OpenWove runs only on your computer. */
 function Billing() {
   return (
     <div className="flex flex-col gap-6">
       <p className="text-sm text-muted-foreground">
-        Coming soon. Agent Flow doesn’t bill you. Your model providers bill you directly for what your runs use. When
+        Coming soon. OpenWove doesn’t bill you. Your model providers bill you directly for what your runs use. When
         Usage is ready, spend will show up here too.
       </p>
       <div>
@@ -187,12 +187,12 @@ function Billing() {
   )
 }
 
-/** Nothing here works yet: there are no accounts while Agent Flow runs only on your computer. */
+/** Nothing here works yet: there are no accounts while OpenWove runs only on your computer. */
 function Account() {
   return (
     <div className="flex flex-col gap-6">
       <p className="text-sm text-muted-foreground">
-        Coming soon. You’re not signed in: Agent Flow runs on your computer without an account. This will appear if you
+        Coming soon. You’re not signed in: OpenWove runs on your computer without an account. This will appear if you
         use a hosted version.
       </p>
       <Group

@@ -15,6 +15,11 @@ export const APP_EVENTS_RETRY_MS = 5_000
 export const STATUS_POLL_MS = 60_000
 /** Ignore long frame gaps (a hidden tab) so time doesn't jump. */
 export const MAX_FRAME_SECONDS = 0.1
+/** The clock updates every frame only while a simulated run plays on Live. Otherwise it moves a
+ *  few pixels a second at most, so it updates this often (seconds) and spares a re-render per frame. */
+export const SLOW_FRAME_SECONDS = 0.25
+/** The sidebar re-checks the runner on hover at most this often. */
+export const HOVER_CHECK_MS = 10_000
 /** Pause between one stage finishing and the next starting, in simulated minutes. */
 export const HANDOFF_MINUTES = 0.6
 /** How far into a step (0–1) the agent gets before it needs approval to act. */

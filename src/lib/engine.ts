@@ -142,9 +142,10 @@ function recordRunIfFinished(sim: Sim): Sim {
 export function tick(sim: Sim, dt: number, windowMinutes: number, random: () => number = Math.random): Sim {
   const simT = sim.simT + dt
   const forgetBefore = simT - windowMinutes * 2
-  const tasks = sim.tasks
-    .filter((t) => t.runId === sim.runId || t.end == null || t.end > forgetBefore)
-    .map((t) => ({ ...t }))
+  const kept = sim.tasks.filter((t) => t.runId === sim.runId || t.end == null || t.end > forgetBefore)
+  // Only pending and running tasks change below; the rest keep their identity so their bars don't re-render.
+  const changing = kept.some((t) => t.state === 'pending' || t.state === 'running')
+  const tasks = changing ? kept.map((t) => (t.state === 'pending' || t.state === 'running' ? { ...t } : t)) : kept
   const run = tasks.filter((t) => t.runId === sim.runId && !t.live)
 
   // Start whichever simulated stage is ready.
@@ -190,7 +191,7 @@ export function tick(sim: Sim, dt: number, windowMinutes: number, random: () => 
     }
   }
 
-  return recordRunIfFinished({ ...sim, simT, tasks })
+  return recordRunIfFinished({ ...sim, simT, tasks: kept.length === sim.tasks.length && !changing ? sim.tasks : tasks })
 }
 
 /* ---------- events from the real runner ---------- */

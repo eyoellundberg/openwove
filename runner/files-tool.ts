@@ -29,7 +29,7 @@ async function connect(workspace: string): Promise<FilesTool> {
   const require = createRequire(import.meta.url)
   const server = require.resolve('@modelcontextprotocol/server-filesystem/dist/index.js')
   const transport = new StdioClientTransport({ command: process.execPath, args: [server, workspace], cwd: workspace })
-  const client = new Client({ name: 'agentflow-runner', version: '0.1.0' })
+  const client = new Client({ name: 'openwove-runner', version: '0.1.0' })
   await client.connect(transport)
   const { tools } = await client.listTools()
 

@@ -1,0 +1,11 @@
+@import "../../src/index.css";
+
+/* The app's files are scanned too, so shadcn component classes are generated for the site. */
+@source "../";
+@source "../../src/components";
+
+/* The canvas's dotted backdrop. */
+@utility bg-dots {
+  background-image: radial-gradient(var(--border) 1px, transparent 1px);
+  background-size: 1.125rem 1.125rem;
+}

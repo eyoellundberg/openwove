@@ -116,7 +116,7 @@
     @apply font-sans;
     }
 }
-/* ---------- Agent Flow tokens ---------- */
+/* ---------- OpenWove tokens ---------- */
 @theme inline {
   --color-running: var(--running);
   --color-running-subtle: var(--running-subtle);

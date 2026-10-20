@@ -4,6 +4,7 @@ import {
   APP_EVENTS_RETRY_MS,
   FAST_FORWARD_RUNS,
   MAX_FRAME_SECONDS,
+  SLOW_FRAME_SECONDS,
   REAL_MINUTES_PER_SECOND,
   SIM_MINUTES_PER_SECOND,
   WINDOW_MINUTES,
@@ -125,6 +126,8 @@ const sim = (s: FlowStore): engine.Sim => ({
 /** Rejoining a run is tried once per page load, even if React mounts the app twice. */
 let tried = false
 let stopListening: (() => void) | null = null
+/** Clock time not yet handed to the engine, while frames are batched. */
+let frameSeconds = 0
 let stopAppEvents: (() => void) | null = null
 
 /** A real run is still going, so swapping the flow out would cut it off. */
@@ -180,8 +183,12 @@ export const useFlow = create<FlowStore>()((set, get) => {
     frame: (seconds) => {
       const s = get()
       if (s.paused) return
+      frameSeconds += Math.min(seconds, MAX_FRAME_SECONDS)
+      const smooth = s.mode === 'simulated' && s.view === 'live'
+      if (!smooth && frameSeconds < SLOW_FRAME_SECONDS) return
       const rate = s.mode === 'real' ? REAL_MINUTES_PER_SECOND : SIM_MINUTES_PER_SECOND
-      set(engine.tick(sim(s), Math.min(seconds, MAX_FRAME_SECONDS) * rate, WINDOW_MINUTES[s.mode]))
+      set(engine.tick(sim(s), frameSeconds * rate, WINDOW_MINUTES[s.mode]))
+      frameSeconds = 0
     },
 
     run: async () => {
@@ -294,7 +301,8 @@ export const useFlow = create<FlowStore>()((set, get) => {
       if (mode === 'real') get().checkRunner()
     },
     checkRunner: async () => {
-      set({ runnerStatus: { state: 'checking' } })
+      // Keep showing "ready" while re-checking, so the status doesn't flicker.
+      if (get().runnerStatus.state !== 'ready') set({ runnerStatus: { state: 'checking' } })
       try {
         const [health, flowFiles] = await Promise.all([runner.health(), runner.listFlows()])
         set({ runnerStatus: { state: 'ready', health }, flowFiles })

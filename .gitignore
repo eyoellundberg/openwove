@@ -23,7 +23,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-workspace/site/
+# Agents' work. Only the sample flows' inputs are committed.
+workspace/*
+!workspace/brief.md
+!workspace/northwind/
+workspace/northwind/*
+!workspace/northwind/company.md
+!workspace/northwind/support-inbox.md
 .env.local
 # Runs saved by the local runner
 runs/

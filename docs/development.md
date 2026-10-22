@@ -63,6 +63,8 @@ After a UI change, look at it in the browser in light and dark mode and at phone
 
 ## UI
 
+The [OpenWove Design System](https://claude.ai/artifact/JnVeDX77XDfujb1Xrk9PLv) is the written reference for these rules: tokens in both themes, what each status color means, type, components and copy. Update it when you change a token in `src/index.css`.
+
 - Build from the shadcn components in [`src/components/ui`](../src/components/ui) and the Tailwind scale.
 - No arbitrary values like `w-[237px]`. Add a theme token in [`src/index.css`](../src/index.css), or a named constant.
 - Status colors are tokens: `running`, `waiting`, `earned`, `failed`, each with a `-subtle` pair. Use them instead of palette colors.

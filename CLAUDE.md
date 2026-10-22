@@ -34,6 +34,8 @@ When someone asks for multi-agent work, follow `skills/openwove-builder/SKILL.md
 
 ## Style
 
+The written design system is the [OpenWove Design System](https://claude.ai/artifact/JnVeDX77XDfujb1Xrk9PLv): tokens, status-color meanings, type, components and copy. Follow it; when you change a token in `src/index.css`, update it there too.
+
 - Build UI from the shadcn components in `src/components/ui` and the Tailwind scale. No arbitrary values like `w-[237px]`; add theme tokens in `src/index.css` and named constants in `src/lib/constants.ts` instead.
 - Icons are Hugeicons (`@hugeicons/react` + `@hugeicons/core-free-icons`), not Lucide.
 - Status colors are tokens: `running`, `waiting`, `earned`, `failed` (each with `-subtle`).

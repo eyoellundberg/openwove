@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useCopy } from '@/hooks/use-copy'
-import { mcpSnippets } from '@/lib/mcp-snippets'
+import { mcpSnippets, setupPrompt } from '@/lib/mcp-snippets'
 import { runner, type AgentSetup } from '@/lib/runner-client'
 import { SETUP_PROMPT } from '@/lib/seed'
 import { useFlow } from '@/lib/store'
@@ -24,7 +24,7 @@ const PASTE_STEPS = [
 ]
 
 const CONNECT_STEPS = [
-  'Connect your agent once. Claude Code takes one click; others take the snippet below.',
+  'Paste the setup note below into your agent once. It adds OpenWove to itself. Claude Code can also do it in one click.',
   'Ask it for the work, e.g. “Set up a flow that turns my brief into a landing page.” In Claude Code you can also pick the set_up_flow prompt.',
   'The flow opens here as your agent saves it. Tweak it and press Save changes; your agent reads what you changed next time it looks.',
 ]
@@ -107,11 +107,11 @@ export function SetupDialog() {
                 <li key={s}>{s}</li>
               ))}
             </ol>
-            {agent?.claudeCode && <ConnectClaudeCode />}
-            {snippets ? (
+            {agent && snippets ? (
               <>
-                {!agent?.claudeCode && <CopyBlock label="Claude Code" text={snippets.claudeCode} />}
-                <CopyBlock label="Claude Desktop, Cursor and other agents (MCP config)" text={snippets.json} />
+                <CopyBlock label="Paste this to your agent" text={setupPrompt(agent)} />
+                {agent.claudeCode && <ConnectClaudeCode />}
+                <CopyBlock label="Or add it by hand: MCP config for Claude Desktop, Cursor and others" text={snippets.json} />
               </>
             ) : (
               <p className="text-sm text-muted-foreground">Start the runner (npm run runner) to get the connection details for your agent.</p>

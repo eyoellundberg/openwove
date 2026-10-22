@@ -8,7 +8,7 @@ It can read the guide and list, read, save and open flows. It **can't** run flow
 
 **Claude Code in this folder** connects automatically through [`.mcp.json`](../.mcp.json).
 
-**In the Mac app:** open **Connect your agent** and press **Connect Claude Code**. The app runs `claude mcp add --scope user` for you, pointing at the Node and MCP server bundled inside the app and at your `~/OpenWove` folder, so it works from any folder. If you move the app, press the button again. Other agents take the JSON config shown there.
+**In the Mac app:** open **Connect your agent** and paste the setup note to your agent; it adds OpenWove to itself, whichever agent it is. Claude Code also has a **Connect Claude Code** button. The app runs `claude mcp add --scope user` for you, pointing at the Node and MCP server bundled inside the app and at your `~/OpenWove` folder, so it works from any folder. If you move the app, press the button again. Other agents take the JSON config shown there.
 
 **Claude Code from source, anywhere else:**
 

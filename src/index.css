@@ -227,3 +227,21 @@
 .react-flow__edge.is-done .react-flow__edge-path {
   stroke: var(--muted-foreground);
 }
+
+/* The welcome's intro: four strands draw in, then each crossing settles into over and under. */
+@keyframes weave-draw {
+  0% { opacity: 0; stroke-dashoffset: 18; }
+  1% { opacity: 1; stroke-dashoffset: 18; }
+  100% { opacity: 1; stroke-dashoffset: 0; }
+}
+@keyframes weave-appear { from { opacity: 0; } to { opacity: 1; } }
+@keyframes weave-rise {
+  from { opacity: 0; transform: translateY(0.5rem); }
+  to { opacity: 1; transform: none; }
+}
+@utility weave-strand { opacity: 0; stroke-dasharray: 18; stroke-dashoffset: 18; animation: weave-draw 0.7s ease-out both; }
+@utility weave-cross { opacity: 0; animation: weave-appear 0.4s ease-out 1.3s both; }
+@utility weave-rise { opacity: 0; animation: weave-rise 0.6s ease-out 1.6s both; }
+@media (prefers-reduced-motion: reduce) {
+  .weave-strand, .weave-cross, .weave-rise { opacity: 1; stroke-dashoffset: 0; animation: none; transform: none; }
+}

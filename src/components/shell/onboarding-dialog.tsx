@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Logo } from '@/components/shared/logo'
 import { KeyList } from '@/components/shell/key-list'
 import { ProfileFields } from '@/components/shell/profile-fields'
+import { WeaveIntro } from '@/components/shell/weave-intro'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { guessPlace } from '@/lib/places'
@@ -13,20 +13,22 @@ export function OnboardingDialog() {
   const profile = useFlow((s) => s.profile)
   const checked = useFlow((s) => s.profileChecked)
   const save = useFlow((s) => s.saveProfile)
-  const [step, setStep] = useState<'you' | 'keys'>('you')
+  const [step, setStep] = useState<'intro' | 'you' | 'keys'>('intro')
   const [draft, setDraft] = useState<Profile>(() => ({ company: '', ...guessPlace() }))
 
   return (
     <Dialog open={checked && !profile}>
       <DialogContent showCloseButton={false} className="sm:max-w-md" onEscapeKeyDown={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
-        <div className="flex items-center gap-2 font-semibold tracking-tight">
-          <Logo className="size-5" />
-          OpenWove
-        </div>
-        {step === 'you' ? (
+        <DialogTitle className="sr-only">Welcome to OpenWove</DialogTitle>
+        {step === 'intro' ? (
+          <>
+            <DialogDescription className="sr-only">A short welcome, then two quick questions.</DialogDescription>
+            <WeaveIntro onContinue={() => setStep('you')} />
+          </>
+        ) : step === 'you' ? (
           <>
             <div className="flex flex-col gap-1">
-              <DialogTitle>A little about you</DialogTitle>
+              <h2 className="text-base leading-none font-medium">A little about you</h2>
               <DialogDescription>Your agents get this as context, so they write for you. It stays on this computer.</DialogDescription>
             </div>
             <ProfileFields value={draft} onChange={setDraft} />
@@ -37,7 +39,7 @@ export function OnboardingDialog() {
         ) : (
           <>
             <div className="flex flex-col gap-1">
-              <DialogTitle>Add a key</DialogTitle>
+              <h2 className="text-base leading-none font-medium">Add a key</h2>
               <DialogDescription>Add any you have. Without one you can still try everything with simulated runs.</DialogDescription>
             </div>
             <KeyList />

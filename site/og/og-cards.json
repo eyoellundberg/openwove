@@ -1,0 +1,7 @@
+{
+  "brand": "OpenWove",
+  "css": "theme.css",
+  "look": "hero",
+  "colors": { "paper": "white", "accent": "accent", "ink": "ink" },
+  "fonts": { "regular": "Geist-Regular.ttf", "semibold": "Geist-SemiBold.ttf", "title": "Geist-SemiBold.ttf" }
+}

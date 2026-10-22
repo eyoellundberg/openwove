@@ -19,6 +19,18 @@ To make the token: Cloudflare dashboard › My Profile › API Tokens › Create
 
 Optionally, redirect `openwove.pages.dev` to the domain once it works (Pages › Settings, or a `_redirects` file).
 
+## The share card
+
+Links to the site show `site/og/og.png` (1200×630). It's drawn with [og-cards](https://github.com/eyoellundberg/og-cards) from the app's colors, which are in `site/og/theme.css` as hex (copied from `src/index.css`). To change it, edit the colors or the title, then from a checkout of og-cards:
+
+```sh
+npx tsx <og-cards>/src/cli.ts generate site/og/og-cards.json
+cd site/og && npx tsx <og-cards>/src/cli.ts preview og-cards.json "Multi-agent work, where you can see it." "Free Mac app"
+mv preview.png og.png   # then commit og.png, ground.png and card.json
+```
+
+The build copies `og.png` into the site (`vite.site.config.ts`), and `site/index.html` points at `VITE_SITE_URL/og.png`. Sites cache cards by URL, so after a change, check it with the platforms' card validators or add a `?v=` to the URL in `index.html`.
+
 ## Releasing the Mac app
 
 1. Bump the version in `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and `package.json`.

@@ -1,0 +1,8 @@
+/* The colors the share card is drawn from, as hex (og-cards reads hex only). They are the app's own tokens from
+   src/index.css, converted from oklch: --background, --foreground and --running. Change them there, then here,
+   then run `npx og-cards generate site/og/og-cards.json` and re-render the card (see docs/deploy.md). */
+@theme {
+  --color-white: #ffffff;
+  --color-ink: #0a0a0a;
+  --color-accent: #326ad9;
+}

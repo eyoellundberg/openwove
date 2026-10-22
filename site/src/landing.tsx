@@ -8,7 +8,8 @@ import { useCopy } from '@/hooks/use-copy'
 import { setupPrompt } from '@/lib/mcp-snippets'
 import { cn } from '@/lib/utils'
 import { DOWNLOAD_MB, DOWNLOAD_URL, REPO, VERSION } from './facts'
-import { AppWindowPreview, CanvasPreview, PromptPreview, WaitingPreview } from './previews'
+import { InteractiveApp } from './demo'
+import { CanvasPreview, PromptPreview, WaitingPreview } from './previews'
 
 /** The note the app hands you, with example paths. */
 const SETUP_NOTE = setupPrompt({
@@ -112,28 +113,47 @@ function Top() {
   )
 }
 
+/** The hero line, word by word, so it arrives the way events do in the app. */
+const HERO_WORDS = [
+  ...'OpenWove'.split(' ').map((text) => ({ text, bold: true })),
+  ...'is a place to see the work your agents plan.'.split(' ').map((text) => ({ text, bold: false })),
+  ...'Under 40 megabytes,'.split(' ').map((text) => ({ text, bold: true })),
+  ...'a canvas, a live timeline, and a window that stops to ask before anything important happens.'.split(' ').map((text) => ({ text, bold: false })),
+]
+/** Seconds between one word and the next, and where the blocks after the title start. */
+const WORD_DELAY = 0.035
+const AFTER_TITLE = HERO_WORDS.length * WORD_DELAY + 0.1
+
+const delay = (seconds: number) => ({ animationDelay: `${seconds.toFixed(2)}s` })
+
 function Hero() {
   return (
     <section className="pt-16 pb-16 sm:pt-24">
       <Wrap>
-        <Logo className="mb-8 size-12" />
-        <p className="max-w-3xl text-2xl leading-snug font-medium tracking-tighter text-balance text-muted-foreground sm:text-4xl">
-          <strong className="font-semibold text-foreground">OpenWove</strong> is a place to see the work your agents plan.{' '}
-          <strong className="font-semibold text-foreground">Under {Math.ceil((DOWNLOAD_MB + 1) / 10) * 10} megabytes</strong>, a canvas, a
-          live timeline, and a window that stops to ask before anything important happens.
+        <Logo className="reveal mb-8 size-12" />
+        <p className="max-w-3xl text-2xl leading-snug font-medium tracking-tighter text-muted-foreground sm:text-4xl">
+          {HERO_WORDS.map((word, i) => (
+            <span key={i}>
+              <span className={cn('reveal inline-block', word.bold && 'font-semibold text-foreground')} style={delay(0.05 + i * WORD_DELAY)}>
+                {word.text}
+              </span>{' '}
+            </span>
+          ))}
         </p>
-        <p className="mt-5 max-w-2xl text-lg text-muted-foreground">Free, for any Apple-silicon Mac on macOS 14 or later.</p>
-        <div className="mt-8 flex flex-wrap items-center gap-3">
+        <p className="reveal mt-5 max-w-2xl text-lg text-muted-foreground" style={delay(AFTER_TITLE)}>
+          Free, for any Apple-silicon Mac on macOS 14 or later.
+        </p>
+        <div className="reveal mt-8 flex flex-wrap items-center gap-3" style={delay(AFTER_TITLE + 0.15)}>
           <DownloadButton />
           <Button asChild size="lg" variant="secondary" className="h-10 rounded-full px-5">
             <a href="#why">Why?</a>
           </Button>
         </div>
-        <p className="mt-4 text-sm text-muted-foreground">
+        <p className="reveal mt-4 text-sm text-muted-foreground" style={delay(AFTER_TITLE + 0.3)}>
           Version {VERSION} · {DOWNLOAD_MB} MB · Free · Intel Mac? Not yet.
         </p>
-        <div className="mt-14">
-          <AppWindowPreview />
+        <div className="reveal mt-14" style={delay(AFTER_TITLE + 0.45)}>
+          <InteractiveApp />
         </div>
       </Wrap>
     </section>

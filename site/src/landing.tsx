@@ -1,5 +1,5 @@
-import { HugeiconsIcon } from '@hugeicons/react'
 import { Copy01Icon, Download01Icon, Tick02Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import type { ReactNode } from 'react'
 import { Logo } from '@/components/shared/logo'
 import { Button } from '@/components/ui/button'
@@ -7,8 +7,8 @@ import { useApplyColorMode } from '@/hooks/use-color-mode'
 import { useCopy } from '@/hooks/use-copy'
 import { setupPrompt } from '@/lib/mcp-snippets'
 import { cn } from '@/lib/utils'
-import { DOWNLOAD_MB, DOWNLOAD_URL, INSTALLED_MB, READY_SECONDS, REPO, VERSION } from './facts'
-import { CanvasPreview, PromptPreview, TimelinePreview, WaitingPreview } from './previews'
+import { DOWNLOAD_MB, DOWNLOAD_URL, REPO, VERSION } from './facts'
+import { AppWindowPreview, CanvasPreview, PromptPreview, WaitingPreview } from './previews'
 
 /** The note the app hands you, with example paths. */
 const SETUP_NOTE = setupPrompt({
@@ -18,22 +18,23 @@ const SETUP_NOTE = setupPrompt({
   claudeCode: true,
 })
 
-const FEATURES = [
-  ['Asks until it has earned it.', 'A step asks you every time until you have approved it three times in a row. One deny and it asks again.'],
-  ['Every cent in view.', 'Each bar, agent and run shows its cost, from the API’s own token counts at list prices. Guesses are marked with ~.'],
-  ['Try it for free.', 'Simulated runs play back made-up work, so you can see a flow before you spend anything.'],
-  ['Any key you have.', 'Add Anthropic, OpenAI or Google keys. They stay in your Keychain. Only Anthropic runs for real so far.'],
-  ['One folder only.', 'Agents read and write inside a single workspace folder. Nothing else on your Mac is in reach.'],
-  ['Written for you.', 'Tell it your company, where you are and your language once, and every agent writes for you.'],
-  ['Plain files.', 'A flow is one JSON file with a published schema. Any agent can write one, and you can read it.'],
-  ['Open source.', 'The code is on GitHub. Read it, build it yourself, or send a fix.'],
+/** What goes wrong when agents work in the dark, and what OpenWove does about it. */
+const WHY = [
+  ['The plan is buried in a chat.', 'It’s a canvas: every step, every agent and its prompt, in order, with what runs at the same time.'],
+  ['It acts first and tells you after.', 'It stops and asks before anything important, and asks less only once it has earned your trust.'],
+  ['You learn the cost from the invoice.', 'Every step shows what it costs as it runs, from the API’s own token counts.'],
+  ['You can’t tell what it actually did.', 'Every run ends in a report: what each step did, which files it touched, and what it asked you. Your agent can read it too.'],
+  ['Your keys and files end up in someone else’s cloud.', 'It runs on your Mac with your own keys, and agents can only reach one folder.'],
+  ['Every agent speaks its own format.', 'Flows are plain JSON with a published schema, so any agent that speaks MCP can write one.'],
 ] as const
 
-const NUMBERS = [
-  [`${DOWNLOAD_MB} MB`, 'to download.', `${INSTALLED_MB} MB once it’s installed.`],
-  [`${READY_SECONDS} s`, 'to ready.', 'From launch until the local runner answers. Median of three.'],
-  ['0', 'accounts.', 'Nothing to sign up for, and nothing to sign in to.'],
-  ['0', 'OpenWove servers.', 'The app and its runner stay on your Mac. Your key goes to your model provider and nowhere else.'],
+const FEATURES = [
+  ['Asks until it has earned it.', 'A step asks you every time until you have approved it three times in a row. One deny and it asks again.'],
+  ['Try it for free.', 'Simulated runs play back made-up work, so you can see a flow before you spend anything.'],
+  ['Any key you have.', 'Add Anthropic, OpenAI or Google keys. They stay in your Keychain. Only Anthropic runs for real so far.'],
+  ['Written for you.', 'Tell it your company, where you are and your language once, and every agent writes for you.'],
+  ['Review with your agent.', 'Run reports and flow files follow published JSON Schemas, so your agent can check the work and suggest changes.'],
+  ['Open source.', 'The code is on GitHub under the MIT license. Read it, build it yourself, or send a fix.'],
 ] as const
 
 const FAQ = [
@@ -57,7 +58,7 @@ export function Landing() {
       <main>
         <Hero />
         <Story />
-        <Numbers />
+        <Why />
         <Features />
         <Questions />
         <Closing />
@@ -67,12 +68,13 @@ export function Landing() {
   )
 }
 
-function Column({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn('mx-auto w-full max-w-3xl px-4 sm:px-6', className)}>{children}</div>
+/** One box for the whole page, so every section shares the same left edge. Text inside is kept to a readable width. */
+function Wrap({ children, className }: { children: ReactNode; className?: string }) {
+  return <div className={cn('mx-auto w-full max-w-6xl px-4 sm:px-6', className)}>{children}</div>
 }
 
-function Wide({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn('mx-auto w-full max-w-5xl px-4 sm:px-6', className)}>{children}</div>
+function Heading({ children, className }: { children: ReactNode; className?: string }) {
+  return <h2 className={cn('text-3xl font-semibold tracking-tighter text-balance sm:text-4xl', className)}>{children}</h2>
 }
 
 function DownloadButton({ className }: { className?: string }) {
@@ -88,13 +90,16 @@ function DownloadButton({ className }: { className?: string }) {
 function Top() {
   return (
     <header className="py-5">
-      <Wide className="flex items-center gap-3">
+      <Wrap className="flex items-center gap-3">
         <a href="#" className="flex items-center gap-2 font-semibold tracking-tight">
           <Logo className="size-5" />
           OpenWove
         </a>
         <span className="hidden text-sm text-muted-foreground sm:inline">· beta</span>
         <nav className="ml-auto flex items-center gap-5 text-sm text-muted-foreground">
+          <a href="#why" className="hover:text-foreground">
+            Why?
+          </a>
           <a href={REPO} className="hover:text-foreground">
             GitHub
           </a>
@@ -102,53 +107,35 @@ function Top() {
             <a href={DOWNLOAD_URL}>Download</a>
           </Button>
         </nav>
-      </Wide>
+      </Wrap>
     </header>
-  )
-}
-
-/** A Mac window around a picture of the app, so it reads as something you download. */
-function Window({ children }: { children: ReactNode }) {
-  return (
-    <div className="overflow-hidden rounded-2xl border bg-card shadow-xl">
-      <div className="flex items-center gap-1.5 border-b bg-muted/60 px-4 py-3" aria-hidden>
-        <span className="size-3 rounded-full bg-failed" />
-        <span className="size-3 rounded-full bg-waiting" />
-        <span className="size-3 rounded-full bg-earned" />
-      </div>
-      {children}
-    </div>
   )
 }
 
 function Hero() {
   return (
-    <section className="pt-16 pb-14 sm:pt-24">
-      <Column>
+    <section className="pt-16 pb-16 sm:pt-24">
+      <Wrap>
         <Logo className="mb-8 size-12" />
-        <p className="text-xl leading-relaxed text-balance text-muted-foreground sm:text-2xl">
+        <p className="max-w-3xl text-2xl leading-snug font-medium tracking-tighter text-balance text-muted-foreground sm:text-4xl">
           <strong className="font-semibold text-foreground">OpenWove</strong> is a place to see the work your agents plan.{' '}
           <strong className="font-semibold text-foreground">Under {Math.ceil((DOWNLOAD_MB + 1) / 10) * 10} megabytes</strong>, a canvas, a
-          live timeline, and a window that stops to ask before anything important happens. Free, for any Apple-silicon Mac on macOS 14 or
-          later.
+          live timeline, and a window that stops to ask before anything important happens.
         </p>
+        <p className="mt-5 max-w-2xl text-lg text-muted-foreground">Free, for any Apple-silicon Mac on macOS 14 or later.</p>
         <div className="mt-8 flex flex-wrap items-center gap-3">
           <DownloadButton />
           <Button asChild size="lg" variant="secondary" className="h-10 rounded-full px-5">
-            <a href="#numbers">The numbers</a>
+            <a href="#why">Why?</a>
           </Button>
         </div>
         <p className="mt-4 text-sm text-muted-foreground">
           Version {VERSION} · {DOWNLOAD_MB} MB · Free · Intel Mac? Not yet.
         </p>
-      </Column>
-      <Wide className="mt-14">
-        <Window>
-          <div className="bg-background p-4 sm:p-6">
-            <CanvasPreview />
-          </div>
-        </Window>
-      </Wide>
+        <div className="mt-14">
+          <AppWindowPreview />
+        </div>
+      </Wrap>
     </section>
   )
 }
@@ -156,13 +143,11 @@ function Hero() {
 function Block({ title, body, children }: { title: string; body: string; children: ReactNode }) {
   return (
     <section className="py-12">
-      <Column>
-        <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
-        <p className="mt-2 text-lg text-muted-foreground">{body}</p>
-      </Column>
-      <Wide className="mt-8">
-        <div className="rounded-2xl border bg-muted/50 p-4 sm:p-8">{children}</div>
-      </Wide>
+      <Wrap>
+        <Heading>{title}</Heading>
+        <p className="mt-3 max-w-2xl text-lg text-muted-foreground">{body}</p>
+        <div className="mt-8 rounded-2xl border bg-muted/50 p-4 sm:p-8">{children}</div>
+      </Wrap>
     </section>
   )
 }
@@ -173,7 +158,7 @@ function CopyBlock({ text }: { text: string }) {
     <div className="relative rounded-xl border bg-card p-4 pr-12 text-left">
       <pre className="font-mono text-sm leading-relaxed break-all whitespace-pre-wrap">{text}</pre>
       <Button variant="ghost" size="icon-sm" className="absolute top-2.5 right-2.5" onClick={copy} aria-label="Copy">
-        {copied ? <HugeiconsIcon icon={Tick02Icon} /> : <HugeiconsIcon icon={Copy01Icon} />}
+        <HugeiconsIcon icon={copied ? Tick02Icon : Copy01Icon} />
       </Button>
     </div>
   )
@@ -182,48 +167,48 @@ function CopyBlock({ text }: { text: string }) {
 function Story() {
   return (
     <>
-      <Block title="Your agent writes it. You read it." body="Open any step to see the agent, its model and its whole prompt. Change what you like and your agent reads your version next time.">
+      <Block title="Your agent writes the plan. You see it." body="Steps run in stages, and the ones in the same stage run at the same time. Each card says who does it, on which model, and what it costs.">
+        <CanvasPreview />
+      </Block>
+      <Block title="Every prompt, readable." body="Open any step to see the agent, its model and its whole prompt. Change what you like and your agent reads your version next time.">
         <PromptPreview />
       </Block>
       <Block title="It asks before it acts." body="A step that saves a file or sends something waits in one tray until you say yes.">
         <WaitingPreview />
       </Block>
-      <Block title="Everything it does, as it does it." body="A timeline of every agent, what it’s on, and what it has cost so far.">
-        <TimelinePreview />
-      </Block>
       <section className="py-12">
-        <Column>
-          <h2 className="text-2xl font-semibold tracking-tight">Any agent can set it up.</h2>
-          <p className="mt-2 text-lg text-muted-foreground">
-            Paste one note to Claude Code, Cursor or anything that speaks MCP. It adds OpenWove to itself, and from then on you just ask for the work.
+        <Wrap>
+          <Heading>Any agent can set it up.</Heading>
+          <p className="mt-3 max-w-2xl text-lg text-muted-foreground">
+            Paste one note to Claude Code, Cursor or anything that speaks MCP. It adds OpenWove to itself, and from then on you just ask for
+            the work.
           </p>
-          <div className="mt-6">
+          <div className="mt-6 max-w-3xl">
             <CopyBlock text={SETUP_NOTE} />
           </div>
-        </Column>
+        </Wrap>
       </section>
     </>
   )
 }
 
-function Numbers() {
+function Why() {
   return (
-    <section id="numbers" className="scroll-mt-8 py-16">
-      <Column>
-        <h2 className="text-2xl font-semibold tracking-tight">Light enough to forget it’s there.</h2>
-        <p className="mt-2 text-lg text-muted-foreground">Measured on an Apple-silicon Mac running macOS 26, from a cold start.</p>
-        <dl className="mt-10 grid gap-x-8 gap-y-10 sm:grid-cols-2">
-          {NUMBERS.map(([figure, label, note]) => (
-            <div key={label}>
-              <dt className="flex items-baseline gap-2">
-                <span className="text-5xl font-semibold tracking-tighter tabular-nums">{figure}</span>
-                <span className="text-lg font-medium">{label}</span>
-              </dt>
-              <dd className="mt-1 text-muted-foreground">{note}</dd>
+    <section id="why" className="scroll-mt-8 py-16">
+      <Wrap>
+        <Heading>Why?</Heading>
+        <p className="mt-3 max-w-2xl text-lg text-muted-foreground">
+          Coding agents are good at splitting work across several agents. They’re not good at showing you what they’re doing.
+        </p>
+        <div className="mt-10 divide-y border-y">
+          {WHY.map(([problem, answer]) => (
+            <div key={problem} className="grid gap-2 py-6 md:grid-cols-2 md:gap-10">
+              <h3 className="text-lg font-medium tracking-tight text-muted-foreground">{problem}</h3>
+              <p className="text-lg">{answer}</p>
             </div>
           ))}
-        </dl>
-      </Column>
+        </div>
+      </Wrap>
     </section>
   )
 }
@@ -231,15 +216,15 @@ function Numbers() {
 function Features() {
   return (
     <section className="py-16">
-      <Column>
-        <ul className="grid gap-x-8 gap-y-6 sm:grid-cols-2">
+      <Wrap>
+        <ul className="grid max-w-4xl gap-x-10 gap-y-6 sm:grid-cols-2">
           {FEATURES.map(([lead, body]) => (
             <li key={lead}>
               <strong className="font-semibold">{lead}</strong> <span className="text-muted-foreground">{body}</span>
             </li>
           ))}
         </ul>
-      </Column>
+      </Wrap>
     </section>
   )
 }
@@ -247,9 +232,9 @@ function Features() {
 function Questions() {
   return (
     <section className="py-16">
-      <Column>
-        <h2 className="text-2xl font-semibold tracking-tight">Questions? Answers.</h2>
-        <div className="mt-6 divide-y border-y">
+      <Wrap>
+        <Heading>Questions? Answers.</Heading>
+        <div className="mt-6 max-w-3xl divide-y border-y">
           {FAQ.map(([question, answer]) => (
             <details key={question} className="group py-4">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium">
@@ -262,7 +247,7 @@ function Questions() {
             </details>
           ))}
         </div>
-      </Column>
+      </Wrap>
     </section>
   )
 }
@@ -270,13 +255,13 @@ function Questions() {
 function Closing() {
   return (
     <section className="py-16">
-      <Column>
-        <p className="text-xl text-balance text-muted-foreground sm:text-2xl">
-          OpenWove is free, for Apple-silicon Macs on macOS 14 or later. Your agent plans, you stay in charge, and nothing leaves your Mac but the
-          calls you choose to make.
+      <Wrap>
+        <p className="max-w-3xl text-2xl font-medium tracking-tighter text-balance text-muted-foreground sm:text-3xl">
+          OpenWove is free, for Apple-silicon Macs on macOS 14 or later. Your agent plans, you stay in charge, and nothing leaves your Mac
+          but the calls you choose to make.
         </p>
         <DownloadButton className="mt-8" />
-      </Column>
+      </Wrap>
     </section>
   )
 }
@@ -284,18 +269,18 @@ function Closing() {
 function Footer() {
   return (
     <footer className="py-10 text-sm text-muted-foreground">
-      <Column className="flex flex-wrap gap-x-4 gap-y-2">
+      <Wrap className="flex flex-wrap gap-x-4 gap-y-2">
         <span>
           Version {VERSION} · {DOWNLOAD_MB} MB · Intel Mac?
         </span>
-        <a href="#numbers" className="hover:text-foreground">
-          The numbers
+        <a href="#why" className="hover:text-foreground">
+          Why?
         </a>
         <a href={REPO} className="hover:text-foreground">
           GitHub
         </a>
         <span className="sm:ml-auto">© 2026 OpenWove</span>
-      </Column>
+      </Wrap>
     </footer>
   )
 }

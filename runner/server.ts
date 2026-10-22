@@ -11,6 +11,7 @@ import { type AppEvent, RESOLUTIONS, type Resolution, type RunnerHealth } from '
 import { type RunSummary, summarize, type StoredRun } from '../src/lib/usage'
 import { API_TRIES, Run } from './run'
 import { loadRuns, saveRun } from './run-store'
+import { agentSetup, connectClaudeCode } from './agent'
 import { readProfile, profileContext, writeProfile } from './profile'
 import { getKey, PROVIDER_IDS, removeKey, setKey } from './secrets'
 import { claudeStatus } from './status'
@@ -34,7 +35,7 @@ const CONTENT_TYPES: Record<string, string> = {
   '.png': 'image/png',
 }
 
-const API_ROUTES = new Set(['health', 'status', 'flows', 'runs', 'app-events', 'profile', 'keys'])
+const API_ROUTES = new Set(['health', 'status', 'flows', 'runs', 'app-events', 'profile', 'keys', 'agent'])
 
 /** A file from the built UI, or index.html for any page the app routes itself. */
 function serveStatic(res: ServerResponse, pathname: string) {
@@ -119,9 +120,14 @@ const server = createServer(async (req, res) => {
         providers: { anthropic: hasAnthropic(), openai: Boolean(getKey('openai')), google: Boolean(getKey('google')) },
         tools: [...RUNNABLE_TOOLS],
         workspace: WORKSPACE,
-        root: ROOT,
       }
       return send(res, 200, health)
+    }
+
+    if (req.method === 'GET' && url.pathname === '/agent') return send(res, 200, agentSetup())
+    if (req.method === 'POST' && url.pathname === '/agent/claude-code') {
+      const problem = await connectClaudeCode()
+      return problem ? send(res, 500, { error: problem }) : send(res, 200, { ok: true })
     }
 
     if (req.method === 'GET' && url.pathname === '/profile') return send(res, 200, readProfile())

@@ -1,11 +1,13 @@
-/** How an agent is pointed at the MCP server. The app fills in your real folder once the runner says where it is. */
-export const PLACEHOLDER_ROOT = '/path/to/OpenWove'
+import type { AgentSetup } from './runner-types'
 
-export function mcpSnippets(root = PLACEHOLDER_ROOT) {
-  const command = `${root}/node_modules/.bin/tsx`
-  const script = `${root}/runner/mcp.ts`
+/** Quotes a path for the shell only if it needs it. */
+const quote = (s: string) => (/^[\w./@:=+-]+$/.test(s) ? s : `'${s.replaceAll("'", `'\\''`)}'`)
+
+/** How an agent is pointed at the MCP server, with the real paths the runner reported. */
+export function mcpSnippets({ command, args, env }: AgentSetup) {
+  const envFlags = Object.entries(env).map(([k, v]) => `-e ${quote(`${k}=${v}`)}`)
   return {
-    claudeCode: `claude mcp add openwove -- ${command} ${script}`,
-    json: JSON.stringify({ mcpServers: { openwove: { command, args: [script] } } }, null, 2),
+    claudeCode: ['claude mcp add --scope user openwove', ...envFlags, '--', quote(command), ...args.map(quote)].join(' '),
+    json: JSON.stringify({ mcpServers: { openwove: { command, args, ...(Object.keys(env).length ? { env } : {}) } } }, null, 2),
   }
 }

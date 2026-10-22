@@ -1,11 +1,11 @@
 /** Talks to the local runner (`npm run runner`), which Vite proxies under /api. */
 import type { RunnerEvent } from './engine'
 import type { FlowFile } from './flow-file'
-import type { AppEvent, FlowListing, Profile, ProviderStatus, Resolution, RunnerHealth } from './runner-types'
+import type { AgentSetup, AppEvent, FlowListing, Profile, ProviderStatus, Resolution, RunnerHealth } from './runner-types'
 import type { Provider } from './types'
 import type { RunSummary } from './usage'
 
-export type { AppEvent, FlowListing, Profile, ProviderStatus, Resolution, RunnerHealth } from './runner-types'
+export type { AgentSetup, AppEvent, FlowListing, Profile, ProviderStatus, Resolution, RunnerHealth } from './runner-types'
 
 async function request<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, body?: unknown): Promise<T> {
   const res = await fetch(`/api${path}`, {
@@ -23,6 +23,9 @@ const post = <T>(path: string, body?: unknown) => request<T>('POST', path, body)
 
 export const runner = {
   health: () => get<RunnerHealth>('/health'),
+  /** How to start the MCP server, and whether Claude Code can be connected in one click. */
+  agent: () => get<AgentSetup>('/agent'),
+  connectClaudeCode: () => post<{ ok: true }>('/agent/claude-code'),
   /** What the person said about themselves, or null before they have. */
   profile: () => get<Profile | null>('/profile'),
   saveProfile: (profile: Profile) => request<Profile>('PUT', '/profile', profile),

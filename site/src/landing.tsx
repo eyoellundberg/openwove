@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 import { CanvasPreview, PromptPreview, Tag, TimelinePreview, WaitingPreview } from './previews'
 
 const REPO = 'https://github.com/eyoellundberg/openwove'
-const MCP_COMMAND = mcpSnippets().claudeCode
+const MCP_COMMAND = mcpSnippets({ command: '/path/to/OpenWove/node_modules/.bin/tsx', args: ['/path/to/OpenWove/runner/mcp.ts'], env: {}, claudeCode: true }).claudeCode
 /** The same command, broken after the `--` so it fits the card. */
 const MCP_COMMAND_SHOWN = MCP_COMMAND.replace(' -- ', ' -- \\\n  ')
 const INSTALL = [`git clone ${REPO}.git OpenWove`, 'cd OpenWove', 'npm install', 'npm run dev'].join('\n')

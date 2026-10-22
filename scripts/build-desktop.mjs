@@ -26,6 +26,8 @@ const banner = { js: "import { createRequire as __cr } from 'node:module'; const
 const bundle = (entry, outfile) =>
   build({ entryPoints: [entry], outfile: join(resources, outfile), bundle: true, platform: 'node', format: 'esm', target: 'node22', banner, logLevel: 'warning' })
 await bundle(join(root, 'runner/server.ts'), 'runner.mjs')
+await bundle(join(root, 'runner/mcp.ts'), 'mcp.mjs')
+cpSync(join(root, 'skills'), join(resources, 'skills'), { recursive: true })
 await bundle(join(root, 'node_modules/@modelcontextprotocol/server-filesystem/dist/index.js'), 'files-server.mjs')
 
 // What a first launch puts in the person's folder. Same inputs the repo commits.

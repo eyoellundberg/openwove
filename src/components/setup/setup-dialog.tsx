@@ -1,4 +1,5 @@
 import { CheckIcon, CopyIcon } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -11,7 +12,8 @@ import {
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useCopy } from '@/hooks/use-copy'
-import { mcpSnippets, PLACEHOLDER_ROOT } from '@/lib/mcp-snippets'
+import { mcpSnippets } from '@/lib/mcp-snippets'
+import { runner, type AgentSetup } from '@/lib/runner-client'
 import { SETUP_PROMPT } from '@/lib/seed'
 import { useFlow } from '@/lib/store'
 
@@ -22,7 +24,7 @@ const PASTE_STEPS = [
 ]
 
 const CONNECT_STEPS = [
-  'Add OpenWove to your agent once, with one of the snippets below.',
+  'Connect your agent once. Claude Code takes one click; others take the snippet below.',
   'Ask it for the work, e.g. “Set up a flow that turns my brief into a landing page.” In Claude Code you can also pick the set_up_flow prompt.',
   'The flow opens here as your agent saves it. Tweak it and press Save changes; your agent reads what you changed next time it looks.',
 ]
@@ -45,14 +47,44 @@ function CopyBlock({ label, text }: { label: string; text: string }) {
   )
 }
 
+/** Adds OpenWove to Claude Code for every folder, then says so. */
+function ConnectClaudeCode() {
+  const [state, setState] = useState<{ phase: 'idle' | 'busy' | 'done' } | { phase: 'failed'; error: string }>({ phase: 'idle' })
+  const connect = async () => {
+    setState({ phase: 'busy' })
+    try {
+      await runner.connectClaudeCode()
+      setState({ phase: 'done' })
+    } catch (e) {
+      setState({ phase: 'failed', error: e instanceof Error ? e.message : 'Couldn’t connect.' })
+    }
+  }
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-3">
+        <Button onClick={connect} disabled={state.phase === 'busy' || state.phase === 'done'}>
+          {state.phase === 'done' && <CheckIcon />}
+          {state.phase === 'done' ? 'Connected to Claude Code' : state.phase === 'busy' ? 'Connecting…' : 'Connect Claude Code'}
+        </Button>
+        {state.phase === 'done' && <span className="text-sm text-muted-foreground">Start a new Claude Code session to use it.</span>}
+      </div>
+      {state.phase === 'failed' && <p className="text-sm text-failed">{state.error}</p>}
+    </div>
+  )
+}
+
 export function SetupDialog() {
   const open = useFlow((s) => s.setupOpen)
   const request = useFlow((s) => s.request)
   const openSetup = useFlow((s) => s.openSetup)
   const status = useFlow((s) => s.runnerStatus)
   const prompt = SETUP_PROMPT(request || 'Describe the work you want done here.')
-  const root = status.state === 'ready' ? status.health.root : PLACEHOLDER_ROOT
-  const snippets = mcpSnippets(root)
+  const ready = status.state === 'ready'
+  const [agent, setAgent] = useState<AgentSetup | null>(null)
+  useEffect(() => {
+    if (open && ready) runner.agent().then(setAgent, () => setAgent(null))
+  }, [open, ready])
+  const snippets = agent && mcpSnippets(agent)
 
   return (
     <Dialog open={open} onOpenChange={openSetup}>
@@ -75,13 +107,16 @@ export function SetupDialog() {
                 <li key={s}>{s}</li>
               ))}
             </ol>
-            <CopyBlock label="Claude Code" text={snippets.claudeCode} />
-            <CopyBlock label="Claude Desktop, Cursor and other agents (MCP config)" text={snippets.json} />
-            <p className="text-xs text-muted-foreground">
-              {status.state === 'ready'
-                ? 'Keep the runner going (npm run runner) so flows open here as your agent saves them.'
-                : `Start the runner (npm run runner) to fill in your folder instead of ${PLACEHOLDER_ROOT}.`}
-            </p>
+            {agent?.claudeCode && <ConnectClaudeCode />}
+            {snippets ? (
+              <>
+                {!agent?.claudeCode && <CopyBlock label="Claude Code" text={snippets.claudeCode} />}
+                <CopyBlock label="Claude Desktop, Cursor and other agents (MCP config)" text={snippets.json} />
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">Start the runner (npm run runner) to get the connection details for your agent.</p>
+            )}
+            <p className="text-xs text-muted-foreground">Keep OpenWove open so flows appear here as your agent saves them.</p>
           </TabsContent>
           <TabsContent value="paste" className="flex min-w-0 flex-col gap-3">
             <ol className="flex list-decimal flex-col gap-1 pl-5 text-muted-foreground">

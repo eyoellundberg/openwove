@@ -3,17 +3,19 @@
  * Claude Desktop, Cursor…). The agent sets up flows with these tools; the app shows them.
  * It talks over stdio, so nothing here may write to stdout except the protocol.
  */
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 import { FlowFileSchema } from '../src/lib/flow-file'
-import { listFlows, readFlow, ROOT, RUNNER_PORT, saveFlow, WORKSPACE } from './flows'
+import { listFlows, readFlow, RUNNER_PORT, saveFlow, WORKSPACE } from './flows'
 
 /** The builder skill, without its frontmatter, plus how it works over this connection. */
 function guide(): string {
-  const skill = readFileSync(join(ROOT, 'skills/openwove-builder/SKILL.md'), 'utf8').replace(/^---[\s\S]*?---\s*/, '')
+  // From source the skill is in the repo; in the packaged app it ships beside this file.
+  const file = ['../skills', 'skills'].map((d) => join(import.meta.dirname, d, 'openwove-builder/SKILL.md')).find(existsSync)
+  const skill = readFileSync(file!, 'utf8').replace(/^---[\s\S]*?---\s*/, '')
   return `${skill}
 ## Over this connection
 

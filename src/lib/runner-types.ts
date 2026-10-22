@@ -11,8 +11,6 @@ export interface RunnerHealth {
   /** Tool ids the runner connects for real runs. */
   tools: string[]
   workspace: string
-  /** The project folder, for the MCP setup snippet. */
-  root: string
 }
 
 /** Whether Claude is up, from Anthropic's public status page. `GET /status`. */
@@ -50,4 +48,14 @@ export interface Profile {
   country: string
   /** A language code, e.g. "sv". Agents write in it unless a task says otherwise. */
   language: string
+}
+
+/** How to start the MCP server, for any agent. `GET /agent`. */
+export interface AgentSetup {
+  command: string
+  args: string[]
+  /** Variables the server needs, e.g. where the person's OpenWove folder is. */
+  env: Record<string, string>
+  /** Whether the `claude` command was found, so one click can connect Claude Code. */
+  claudeCode: boolean
 }

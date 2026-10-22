@@ -32,10 +32,11 @@ To run a second copy alongside the first, for example from another worktree, set
 `src-tauri/` wraps the app in a Tauri window (macOS, Apple silicon). It starts the runner with a bundled Node, and the runner serves the built UI itself, since there's no Vite proxy in a packaged app.
 
 ```sh
-npm run desktop:build   # needs Rust (rustup.rs)
+npm run desktop:build         # Apple silicon; needs Rust (rustup.rs)
+npm run desktop:build:intel   # Intel; also needs `rustup target add x86_64-apple-darwin`
 ```
 
-`scripts/build-desktop.mjs` gathers the built UI, the runner, MCP server and file tool as single files (esbuild), the builder skill, the sample flows and an arm64-only Node into `src-tauri/`; `tauri build` then makes the `.app` and `.dmg` under `src-tauri/target/release/bundle/`. The result is unsigned for now.
+`scripts/build-desktop.mjs` gathers the built UI, the runner, MCP server and file tool as single files (esbuild), the builder skill, the sample flows and a Node for one chip (`node-aarch64-apple-darwin` or `node-x86_64-apple-darwin`, cut from the two-chip Node you have) into `src-tauri/`; `tauri build` then makes the `.app` and `.dmg` under `src-tauri/target/release/bundle/`. The result is unsigned for now.
 
 - The packaged runner reads and writes `~/OpenWove` (flows, workspace, runs, `.env.local`) instead of the repo. A first launch copies the samples there. It listens on port 5189, the same as `npm run runner`, so quit one before starting the other.
 - These variables are set by the app and read by the runner: `OPENWOVE_HOME`, `OPENWOVE_STATIC`, `OPENWOVE_SEED`, `OPENWOVE_FILES_SERVER`.

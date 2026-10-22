@@ -1,7 +1,7 @@
 /**
  * Gathers what the desktop app carries: the built UI, the runner and file tool as single files,
  * the sample flows, and a Node to run them with. Then `tauri build` wraps it all.
- * Run through `npm run desktop:build`.
+ * Run through `npm run desktop:build`, or `npm run desktop:build:intel` for the Intel build (`--arch x64`).
  */
 import { execFileSync } from 'node:child_process'
 import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs'
@@ -37,11 +37,13 @@ mkdirSync(join(seed, 'workspace/northwind'), { recursive: true })
 cpSync(join(root, 'workspace/brief.md'), join(seed, 'workspace/brief.md'))
 for (const f of ['company.md', 'support-inbox.md']) cpSync(join(root, 'workspace/northwind', f), join(seed, 'workspace/northwind', f))
 
-// Node for Apple silicon only: the one you have is both chips (about 214 MB), this is half that.
-const triple = 'aarch64-apple-darwin'
+// Node for one chip: the one you have is both (about 214 MB), a single half is about 100 MB. Tauri finds the
+// sidecar by its target triple.
+const intel = process.argv.includes('--arch') && process.argv[process.argv.indexOf('--arch') + 1] === 'x64'
+const triple = intel ? 'x86_64-apple-darwin' : 'aarch64-apple-darwin'
 const node = join(binaries, `node-${triple}`)
 if (!existsSync(node)) {
-  execFileSync('lipo', ['-thin', 'arm64', process.execPath, '-output', node])
+  execFileSync('lipo', ['-thin', intel ? 'x86_64' : 'arm64', process.execPath, '-output', node])
   execFileSync('strip', ['-x', node], { stdio: 'ignore' })
   execFileSync('codesign', ['--force', '--sign', '-', node])
 }

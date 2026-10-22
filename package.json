@@ -19,7 +19,8 @@
     "site:build": "vite build --config vite.site.config.ts",
     "desktop:build": "node scripts/build-desktop.mjs && tauri build",
     "schemas": "tsx scripts/schemas.ts",
-    "site:deploy": "npm run site:build && npx wrangler@4 pages deploy"
+    "site:deploy": "npm run site:build && npx wrangler@4 pages deploy",
+    "desktop:build:intel": "node scripts/build-desktop.mjs --arch x64 && tauri build --target x86_64-apple-darwin"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",

@@ -7,7 +7,7 @@ import { useApplyColorMode } from '@/hooks/use-color-mode'
 import { useCopy } from '@/hooks/use-copy'
 import { setupPrompt } from '@/lib/mcp-snippets'
 import { cn } from '@/lib/utils'
-import { DOWNLOAD_MB, DOWNLOAD_URL, REPO, VERSION } from './facts'
+import { DOWNLOAD_MB, DOWNLOAD_URL, DOWNLOAD_URL_INTEL, REPO, VERSION } from './facts'
 import { InteractiveApp } from './demo'
 import { CanvasPreview, PromptPreview, WaitingPreview } from './previews'
 
@@ -41,7 +41,7 @@ const FEATURES = [
 const FAQ = [
   ['What is OpenWove?', 'A Mac app for the work your coding agent plans. Your agent writes a flow: which agents do what, in which order, and which steps ask you first. OpenWove shows it on a canvas, runs it, and stops to ask before anything important happens.'],
   ['Is it free?', 'Yes, for now. No account, no subscription. You pay your model provider for the runs you choose to make.'],
-  ['Which Macs?', 'Apple silicon, on macOS 14 or later. There is no Intel build yet.'],
+  ['Which Macs?', 'Any Mac on macOS 14 or later. The main download is for Apple silicon (M1 and later); Intel Macs have a download of their own.'],
   ['Why does macOS say it can’t verify it?', 'It’s a beta, and not signed with an Apple developer certificate yet. Open System Settings › Privacy & Security, scroll down, and press Open Anyway. You only do it once. We’ll sign it before 1.0.'],
   ['What happens to my API key?', 'It goes in your Mac’s Keychain and is used only by the runner on your Mac. It leaves your computer only in calls to the provider you added it for.'],
   ['Which models run for real?', 'Claude, through Anthropic. OpenAI and Google keys can be saved, but flows that use those models play back as simulations for now.'],
@@ -141,7 +141,7 @@ function Hero() {
           ))}
         </p>
         <p className="reveal mt-5 max-w-2xl text-lg text-muted-foreground" style={delay(AFTER_TITLE)}>
-          Free, for any Apple-silicon Mac on macOS 14 or later.
+          Free, for any Mac on macOS 14 or later, Apple silicon or Intel.
         </p>
         <div className="reveal mt-8 flex flex-wrap items-center gap-3" style={delay(AFTER_TITLE + 0.15)}>
           <DownloadButton />
@@ -150,7 +150,10 @@ function Hero() {
           </Button>
         </div>
         <p className="reveal mt-4 text-sm text-muted-foreground" style={delay(AFTER_TITLE + 0.3)}>
-          Version {VERSION} · {DOWNLOAD_MB} MB · Free · Intel Mac? Not yet.
+          Version {VERSION} · {DOWNLOAD_MB} MB · Free ·{' '}
+          <a href={DOWNLOAD_URL_INTEL} className="underline underline-offset-4 hover:text-foreground">
+            Intel Mac?
+          </a>
         </p>
         <div className="reveal mt-14" style={delay(AFTER_TITLE + 0.45)}>
           <InteractiveApp />
@@ -277,7 +280,7 @@ function Closing() {
     <section className="py-16">
       <Wrap>
         <p className="max-w-3xl text-2xl font-medium tracking-tighter text-balance text-muted-foreground sm:text-3xl">
-          OpenWove is free, for Apple-silicon Macs on macOS 14 or later. Your agent plans, you stay in charge, and nothing leaves your Mac
+          OpenWove is free, for Macs on macOS 14 or later. Your agent plans, you stay in charge, and nothing leaves your Mac
           but the calls you choose to make.
         </p>
         <DownloadButton className="mt-8" />
@@ -291,7 +294,10 @@ function Footer() {
     <footer className="py-10 text-sm text-muted-foreground">
       <Wrap className="flex flex-wrap gap-x-4 gap-y-2">
         <span>
-          Version {VERSION} · {DOWNLOAD_MB} MB · Intel Mac?
+          Version {VERSION} · {DOWNLOAD_MB} MB ·{' '}
+          <a href={DOWNLOAD_URL_INTEL} className="underline underline-offset-4 hover:text-foreground">
+            Intel Mac?
+          </a>
         </span>
         <a href="#why" className="hover:text-foreground">
           Why?

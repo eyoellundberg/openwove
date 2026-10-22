@@ -34,7 +34,7 @@ The build copies `og.png` into the site (`vite.site.config.ts`), and `site/index
 ## Releasing the Mac app
 
 1. Bump the version in `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and `package.json` (`npm version X.Y.Z --no-git-tag-version` does the last one and the lockfile), and `VERSION` in `site/src/facts.ts`.
-2. `npm run desktop:build` (see [development.md](development.md#the-desktop-app)). The `.dmg` is in `src-tauri/target/release/bundle/dmg/`.
-3. Check it: mount it, `codesign --verify --deep --strict` the app, and launch the copy. Then publish it with `gh release create vX.Y.Z`, uploading the `.dmg` renamed to **`OpenWove-arm64.dmg`** (the site's link relies on that name staying the same) and its `.sha256`.
+2. Build both: `npm run desktop:build` (Apple silicon) and `npm run desktop:build:intel` (see [development.md](development.md#the-desktop-app)). The `.dmg` files are in `src-tauri/target/release/bundle/dmg/` and `src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/`.
+3. Check each: mount it, `codesign --verify --deep --strict` the app, and launch the copy. The Intel one runs on an Apple-silicon Mac under Rosetta, which is a good test but not real Intel hardware. Then publish with `gh release create vX.Y.Z`, uploading the `.dmg` files renamed to **`OpenWove-arm64.dmg`** and **`OpenWove-x64.dmg`** (the site's links rely on those names staying the same) and a `.sha256` for each.
 
 The beta is ad-hoc signed with the hardened runtime **off** (`tauri.conf.json`). The runtime stops the bundled Node's JIT, so before notarizing with an Apple Developer ID, add an entitlements file allowing JIT and turn the runtime back on.

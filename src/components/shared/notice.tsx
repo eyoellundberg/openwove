@@ -1,4 +1,5 @@
-import { TriangleAlertIcon, XIcon } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Alert02Icon, Cancel01Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { useFlow } from '@/lib/store'
 
@@ -12,10 +13,10 @@ export function Notice() {
       role="alert"
       className="flex items-center gap-2 rounded-lg bg-failed-subtle px-3 py-2 text-sm text-failed animate-in fade-in slide-in-from-top-1"
     >
-      <TriangleAlertIcon className="size-4 shrink-0" />
+      <HugeiconsIcon icon={Alert02Icon} className="size-4 shrink-0" />
       <span className="min-w-0 flex-1 whitespace-pre-line">{notice}</span>
       <Button variant="ghost" size="icon-sm" onClick={dismiss} aria-label="Dismiss">
-        <XIcon />
+        <HugeiconsIcon icon={Cancel01Icon} />
       </Button>
     </div>
   )

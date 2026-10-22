@@ -1,4 +1,5 @@
-import { ChartNoAxesColumnIcon } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { ChartColumnIcon } from '@hugeicons/core-free-icons'
 import { useEffect, useState } from 'react'
 import { PageHeader } from '@/components/shell/page-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -111,7 +112,7 @@ export function UsagePage() {
         ) : (
           <div className="flex flex-1 items-center justify-center py-10">
             <div className="flex max-w-sm flex-col items-center gap-3 text-center">
-              <ChartNoAxesColumnIcon className="size-8 text-muted-foreground" />
+              <HugeiconsIcon icon={ChartColumnIcon} className="size-8 text-muted-foreground" />
               <h2 className="font-medium">{runnerReady ? 'No real runs yet' : 'The runner isn’t running'}</h2>
               <p className="text-sm text-muted-foreground">
                 {runnerReady

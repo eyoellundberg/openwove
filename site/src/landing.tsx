@@ -1,4 +1,5 @@
-import { CheckIcon, CopyIcon, DownloadIcon } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Copy01Icon, Download01Icon, Tick02Icon } from '@hugeicons/core-free-icons'
 import type { ReactNode } from 'react'
 import { Logo } from '@/components/shared/logo'
 import { Button } from '@/components/ui/button'
@@ -78,7 +79,7 @@ function DownloadButton({ className }: { className?: string }) {
   return (
     <Button asChild size="lg" className={cn('h-10 rounded-full px-5', className)}>
       <a href={DOWNLOAD_URL}>
-        <DownloadIcon /> Download for macOS
+        <HugeiconsIcon icon={Download01Icon} /> Download for macOS
       </a>
     </Button>
   )
@@ -172,7 +173,7 @@ function CopyBlock({ text }: { text: string }) {
     <div className="relative rounded-xl border bg-card p-4 pr-12 text-left">
       <pre className="font-mono text-sm leading-relaxed break-all whitespace-pre-wrap">{text}</pre>
       <Button variant="ghost" size="icon-sm" className="absolute top-2.5 right-2.5" onClick={copy} aria-label="Copy">
-        {copied ? <CheckIcon /> : <CopyIcon />}
+        {copied ? <HugeiconsIcon icon={Tick02Icon} /> : <HugeiconsIcon icon={Copy01Icon} />}
       </Button>
     </div>
   )

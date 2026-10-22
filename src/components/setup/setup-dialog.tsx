@@ -1,4 +1,5 @@
-import { CheckIcon, CopyIcon } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Copy01Icon, Tick02Icon } from '@hugeicons/core-free-icons'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -36,7 +37,7 @@ function CopyBlock({ label, text }: { label: string; text: string }) {
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs text-muted-foreground">{label}</span>
         <Button variant="ghost" size="sm" onClick={copy}>
-          {copied ? <CheckIcon /> : <CopyIcon />}
+          {copied ? <HugeiconsIcon icon={Tick02Icon} /> : <HugeiconsIcon icon={Copy01Icon} />}
           {copied ? 'Copied' : 'Copy'}
         </Button>
       </div>
@@ -63,7 +64,7 @@ function ConnectClaudeCode() {
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center gap-3">
         <Button onClick={connect} disabled={state.phase === 'busy' || state.phase === 'done'}>
-          {state.phase === 'done' && <CheckIcon />}
+          {state.phase === 'done' && <HugeiconsIcon icon={Tick02Icon} />}
           {state.phase === 'done' ? 'Connected to Claude Code' : state.phase === 'busy' ? 'Connecting…' : 'Connect Claude Code'}
         </Button>
         {state.phase === 'done' && <span className="text-sm text-muted-foreground">Start a new Claude Code session to use it.</span>}

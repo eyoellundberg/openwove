@@ -1,4 +1,5 @@
-import { CheckIcon } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Tick02Icon } from '@hugeicons/core-free-icons'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -41,7 +42,7 @@ function KeyRow({ provider }: { provider: (typeof PROVIDERS)[number] }) {
         {saved ? (
           <>
             <span className="flex items-center gap-1 text-sm text-earned">
-              <CheckIcon className="size-4" /> Saved
+              <HugeiconsIcon icon={Tick02Icon} className="size-4" /> Saved
             </span>
             <Button variant="ghost" size="sm" disabled={busy} onClick={() => change(false)}>
               Remove

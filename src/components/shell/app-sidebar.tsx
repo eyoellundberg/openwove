@@ -1,13 +1,5 @@
-import {
-  ActivityIcon,
-  ChartNoAxesColumnIcon,
-  DownloadIcon,
-  FileJsonIcon,
-  FolderOpenIcon,
-  PlugIcon,
-  SettingsIcon,
-  WorkflowIcon,
-} from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Activity01Icon, ChartColumnIcon, Download01Icon, FileScriptIcon, FolderOpenIcon, PlugSocketIcon, Settings01Icon, WorkflowSquare01Icon } from '@hugeicons/core-free-icons'
 import { useRef } from 'react'
 import { StatusDot } from '@/components/shared/status-dot'
 import {
@@ -85,7 +77,7 @@ function FlowsGroup() {
           {!file && !flowFiles.some((f) => f.name === name) && (
             <SidebarMenuItem>
               <SidebarMenuButton isActive={view === 'setup'} tooltip={name} onClick={() => setView('setup')}>
-                <WorkflowIcon />
+                <HugeiconsIcon icon={WorkflowSquare01Icon} />
                 <span>{name}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -97,20 +89,20 @@ function FlowsGroup() {
                 tooltip={f.name}
                 onClick={() => open(f.file)}
               >
-                <FileJsonIcon />
+                <HugeiconsIcon icon={FileScriptIcon} />
                 <span>{f.name}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
           <SidebarMenuItem>
             <SidebarMenuButton className="text-muted-foreground" tooltip="Open a flow file…" onClick={() => fileInput.current?.click()}>
-              <FolderOpenIcon />
+              <HugeiconsIcon icon={FolderOpenIcon} />
               <span>Open a flow file…</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton className="text-muted-foreground" tooltip="Download this flow" onClick={download}>
-              <DownloadIcon />
+              <HugeiconsIcon icon={Download01Icon} />
               <span>Download this flow</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -194,7 +186,7 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton isActive={view === 'live'} tooltip="Live" onClick={() => setView('live')}>
-                  <ActivityIcon />
+                  <HugeiconsIcon icon={Activity01Icon} />
                   <span>Live</span>
                 </SidebarMenuButton>
                 {waiting > 0 && (
@@ -205,7 +197,7 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton isActive={view === 'usage'} tooltip="Usage" onClick={() => setView('usage')}>
-                  <ChartNoAxesColumnIcon />
+                  <HugeiconsIcon icon={ChartColumnIcon} />
                   <span>Usage</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -222,13 +214,13 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Connect your agent" onClick={() => openSetup(true)}>
-              <PlugIcon />
+              <HugeiconsIcon icon={PlugSocketIcon} />
               <span>Connect your agent</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Settings" onClick={() => openSettings(true)}>
-              <SettingsIcon />
+              <HugeiconsIcon icon={Settings01Icon} />
               <span>Settings</span>
             </SidebarMenuButton>
           </SidebarMenuItem>

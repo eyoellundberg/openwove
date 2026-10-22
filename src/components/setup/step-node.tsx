@@ -1,5 +1,6 @@
 import { Handle, Position, type Node, type NodeProps } from '@xyflow/react'
-import { GripVerticalIcon, MoreHorizontalIcon, ScrollTextIcon, Trash2Icon } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Delete02Icon, DragDropVerticalIcon, MoreHorizontalIcon, Note01Icon } from '@hugeicons/core-free-icons'
 import { memo } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { AgentAvatar } from '@/components/shared/agent-avatar'
@@ -72,7 +73,7 @@ function StepNodeView({ data }: NodeProps<StepNodeType>) {
       <Handle type="source" position={Position.Right} isConnectable={false} className="opacity-0" />
 
       <CardHeader className="flex items-center gap-2">
-        <GripVerticalIcon className="size-4 shrink-0 cursor-grab text-muted-foreground" aria-hidden />
+        <HugeiconsIcon icon={DragDropVerticalIcon} className="size-4 shrink-0 cursor-grab text-muted-foreground" aria-hidden />
         <span className="w-5 font-mono text-xs text-muted-foreground tabular-nums">
           {String(data.number).padStart(2, '0')}
         </span>
@@ -95,19 +96,19 @@ function StepNodeView({ data }: NodeProps<StepNodeType>) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon-sm" className="nodrag" aria-label={`More for step ${data.number}`}>
-              <MoreHorizontalIcon />
+              <HugeiconsIcon icon={MoreHorizontalIcon} />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onSelect={() => openPrompt(step.id)}>
-              <ScrollTextIcon />
+              <HugeiconsIcon icon={Note01Icon} />
               View and edit prompt
             </DropdownMenuItem>
             {canRemove && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem variant="destructive" onSelect={() => removeStep(step.id)}>
-                  <Trash2Icon />
+                  <HugeiconsIcon icon={Delete02Icon} />
                   Remove step
                 </DropdownMenuItem>
               </>

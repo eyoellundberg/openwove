@@ -34,6 +34,7 @@ When someone asks for multi-agent work, follow `skills/openwove-builder/SKILL.md
 ## Style
 
 - Build UI from the shadcn components in `src/components/ui` and the Tailwind scale. No arbitrary values like `w-[237px]`; add theme tokens in `src/index.css` and named constants in `src/lib/constants.ts` instead.
+- Icons are Hugeicons (`@hugeicons/react` + `@hugeicons/core-free-icons`), not Lucide.
 - Status colors are tokens: `running`, `waiting`, `earned`, `failed` (each with `-subtle`).
 - Copy is plain and written from the user's side ("Waiting for you", not "Pending approvals").
 

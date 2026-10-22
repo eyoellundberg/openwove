@@ -1,4 +1,5 @@
-import { PlayIcon, PlusIcon, SaveIcon } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { FloppyDiskIcon, PlayIcon, PlusSignIcon } from '@hugeicons/core-free-icons'
 import { ModeSelect } from '@/components/shared/mode-select'
 import { PageHeader } from '@/components/shell/page-header'
 import { Button } from '@/components/ui/button'
@@ -28,12 +29,12 @@ export function SetupHeader() {
     >
       {unsaved && runnerReady && (
         <Button variant="outline" size="sm" onClick={saveToFile}>
-          <SaveIcon />
+          <HugeiconsIcon icon={FloppyDiskIcon} />
           {file ? 'Save changes' : 'Save to flows'}
         </Button>
       )}
       <Button variant="outline" size="sm" onClick={addStep}>
-        <PlusIcon />
+        <HugeiconsIcon icon={PlusSignIcon} />
         Add step
       </Button>
       <ModeSelect />
@@ -44,7 +45,7 @@ export function SetupHeader() {
           if (!useFlow.getState().notice) setView('live')
         }}
       >
-        <PlayIcon />
+        <HugeiconsIcon icon={PlayIcon} />
         Run flow
       </Button>
     </PageHeader>

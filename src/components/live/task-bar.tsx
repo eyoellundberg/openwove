@@ -1,4 +1,5 @@
-import { CheckIcon, TriangleAlertIcon } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Alert02Icon, Tick02Icon } from '@hugeicons/core-free-icons'
 import { memo } from 'react'
 import { ToolIcons } from '@/components/shared/tool-icons'
 import { Button } from '@/components/ui/button'
@@ -61,7 +62,7 @@ export const TaskBar = memo(function TaskBar({ task, now, left, width, onFlag }:
               className="ml-auto animate-nudge text-waiting"
               onClick={() => onFlag(task.id)}
             >
-              <TriangleAlertIcon />
+              <HugeiconsIcon icon={Alert02Icon} />
               Needs you
             </Button>
           )}
@@ -70,7 +71,7 @@ export const TaskBar = memo(function TaskBar({ task, now, left, width, onFlag }:
           )}
           {task.actedAlone && task.state !== 'waiting' && (
             <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-md bg-background px-2 py-0.5 text-xs text-earned">
-              <CheckIcon className="size-3" />
+              <HugeiconsIcon icon={Tick02Icon} className="size-3" />
               Didn’t need to ask
             </span>
           )}

@@ -1,6 +1,7 @@
 import '@xyflow/react/dist/style.css'
 import { ReactFlowProvider } from '@xyflow/react'
-import { BotIcon } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { BotIcon } from '@hugeicons/core-free-icons'
 import { RunnerNote } from '@/components/shared/mode-select'
 import { Notice } from '@/components/shared/notice'
 import { Button } from '@/components/ui/button'
@@ -25,7 +26,7 @@ export function SetupView() {
           role="status"
           className="flex flex-wrap items-center gap-2 rounded-lg bg-running-subtle px-3 py-2 text-sm text-running animate-in fade-in slide-in-from-top-1"
         >
-          <BotIcon className="size-4 shrink-0" />
+          <HugeiconsIcon icon={BotIcon} className="size-4 shrink-0" />
           <span className="min-w-0 flex-1">
             Your agent saved {agentSaved}.{' '}
             {unsaved ? 'Opening it replaces your unsaved changes.' : 'Opening it ends the run that’s going.'}

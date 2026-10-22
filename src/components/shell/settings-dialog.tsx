@@ -1,12 +1,5 @@
-import {
-  BotIcon,
-  CreditCardIcon,
-  HardDriveIcon,
-  KeyRoundIcon,
-  LogOutIcon,
-  SlidersHorizontalIcon,
-  UserRoundIcon,
-} from 'lucide-react'
+import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react'
+import { BotIcon, CreditCardIcon, HardDriveIcon, Key01Icon, Logout01Icon, SlidersHorizontalIcon, UserIcon } from '@hugeicons/core-free-icons'
 import { useState, type ComponentType, type ReactNode } from 'react'
 import { ModeSelect } from '@/components/shared/mode-select'
 import { KeyList } from '@/components/shell/key-list'
@@ -184,13 +177,13 @@ function Account() {
   )
 }
 
-const SECTIONS: { id: string; name: string; icon: ComponentType<{ className?: string }>; content: ComponentType }[] = [
+const SECTIONS: { id: string; name: string; icon: IconSvgElement; content: ComponentType }[] = [
   { id: 'general', name: 'General', icon: SlidersHorizontalIcon, content: General },
-  { id: 'models', name: 'Models and keys', icon: KeyRoundIcon, content: Models },
+  { id: 'models', name: 'Models and keys', icon: Key01Icon, content: Models },
   { id: 'runner', name: 'Runner', icon: HardDriveIcon, content: Runner },
   { id: 'agent', name: 'Your agent', icon: BotIcon, content: YourAgent },
   { id: 'billing', name: 'Billing', icon: CreditCardIcon, content: Billing },
-  { id: 'account', name: 'Account', icon: UserRoundIcon, content: Account },
+  { id: 'account', name: 'Account', icon: UserIcon, content: Account },
 ]
 
 export function SettingsDialog() {
@@ -216,14 +209,14 @@ export function SettingsDialog() {
                   aria-current={active === id ? 'page' : undefined}
                   onClick={() => setActive(id)}
                 >
-                  <Icon />
+                  <HugeiconsIcon icon={Icon} />
                   {name}
                 </Button>
               ))}
             </div>
             {/* Nothing to log out of until there is a hosted version with accounts. */}
             <Button variant="ghost" className="mt-auto justify-start text-muted-foreground" disabled>
-              <LogOutIcon />
+              <HugeiconsIcon icon={Logout01Icon} />
               Log out
             </Button>
           </nav>

@@ -1,4 +1,5 @@
-import { FastForwardIcon } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { FastForwardIcon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { FAST_FORWARD_RUNS, RUNS_SHOWN, RUNS_SUMMARY } from '@/lib/constants'
 import { formatCost } from '@/lib/models'
@@ -66,7 +67,7 @@ export function RunsStrip() {
       </div>
 
       <Button variant="outline" size="sm" onClick={fastForward}>
-        <FastForwardIcon />
+        <HugeiconsIcon icon={FastForwardIcon} />
         Fast-forward {FAST_FORWARD_RUNS} runs
       </Button>
     </section>

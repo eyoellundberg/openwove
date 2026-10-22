@@ -65,6 +65,7 @@ After a UI change, look at it in the browser in light and dark mode and at phone
 - Build from the shadcn components in [`src/components/ui`](../src/components/ui) and the Tailwind scale.
 - No arbitrary values like `w-[237px]`. Add a theme token in [`src/index.css`](../src/index.css), or a named constant.
 - Status colors are tokens: `running`, `waiting`, `earned`, `failed`, each with a `-subtle` pair. Use them instead of palette colors.
+- Icons are [Hugeicons](https://hugeicons.com) (the free set): `<HugeiconsIcon icon={Tick02Icon} />`, with `Tick02Icon` imported from `@hugeicons/core-free-icons`. Size them with a `size-*` class like any svg. shadcn's `components.json` has `iconLibrary: hugeicons`, so components you add use them too.
 - Geist is the only font. Headings are semibold with tight tracking.
 - The website in `site/` imports from `@/` like the app does, so it uses the same components and tokens. Keep anything only the site needs in `site/`.
 

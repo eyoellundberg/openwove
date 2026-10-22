@@ -1,4 +1,5 @@
-import { PauseIcon, PlayIcon, RotateCcwIcon } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { PauseIcon, PlayIcon, RotateLeft01Icon } from '@hugeicons/core-free-icons'
 import { ModeSelect } from '@/components/shared/mode-select'
 import { PageHeader } from '@/components/shell/page-header'
 import { Button } from '@/components/ui/button'
@@ -33,11 +34,11 @@ export function LiveHeader() {
       }
     >
       <Button variant="outline" size="sm" onClick={togglePause}>
-        {paused ? <PlayIcon /> : <PauseIcon />}
+        {paused ? <HugeiconsIcon icon={PlayIcon} /> : <HugeiconsIcon icon={PauseIcon} />}
         {paused ? 'Resume' : 'Pause'}
       </Button>
       <Button variant="outline" size="sm" onClick={run}>
-        <RotateCcwIcon />
+        <HugeiconsIcon icon={RotateLeft01Icon} />
         Run again
       </Button>
       <ModeSelect />

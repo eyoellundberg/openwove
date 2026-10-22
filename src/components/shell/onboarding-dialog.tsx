@@ -18,7 +18,7 @@ export function OnboardingDialog() {
 
   return (
     <Dialog open={checked && !profile}>
-      <DialogContent showCloseButton={false} className="sm:max-w-md" onEscapeKeyDown={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
+      <DialogContent showCloseButton={false} className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
         <DialogTitle className="sr-only">Welcome to OpenWove</DialogTitle>
         {step === 'intro' ? (
           <>

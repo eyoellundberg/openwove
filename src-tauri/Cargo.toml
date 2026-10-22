@@ -3,6 +3,7 @@ name = "openwove"
 version = "0.1.0"
 description = "See, tweak and run the multi-agent flows your own agent sets up."
 edition = "2021"
+license = "MIT"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

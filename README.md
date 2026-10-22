@@ -104,3 +104,7 @@ Without MCP, an agent can follow [`skills/openwove-builder/SKILL.md`](skills/ope
 | `workspace/` | The only folder agents can read and write. Inputs for the samples are committed; outputs aren't. |
 | `site/` | The website, sharing the app's theme and components. |
 | `docs/` | The documentation above. |
+
+## Contributing and license
+
+Issues and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md). Report security problems privately, as described in [SECURITY.md](SECURITY.md). OpenWove is released under the [MIT License](LICENSE).

@@ -1,216 +1,176 @@
-import { ArrowRightIcon, CheckIcon, CopyIcon, FolderLockIcon, KeyRoundIcon, MonitorIcon } from 'lucide-react'
+import { CheckIcon, CopyIcon, DownloadIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Logo } from '@/components/shared/logo'
 import { Button } from '@/components/ui/button'
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useApplyColorMode } from '@/hooks/use-color-mode'
 import { useCopy } from '@/hooks/use-copy'
-import { mcpSnippets } from '@/lib/mcp-snippets'
+import { setupPrompt } from '@/lib/mcp-snippets'
 import { cn } from '@/lib/utils'
-import { CanvasPreview, PromptPreview, Tag, TimelinePreview, WaitingPreview } from './previews'
+import { DOWNLOAD_MB, DOWNLOAD_URL, INSTALLED_MB, READY_SECONDS, REPO, VERSION } from './facts'
+import { CanvasPreview, PromptPreview, TimelinePreview, WaitingPreview } from './previews'
 
-const REPO = 'https://github.com/eyoellundberg/openwove'
-const MCP_COMMAND = mcpSnippets({ command: '/path/to/OpenWove/node_modules/.bin/tsx', args: ['/path/to/OpenWove/runner/mcp.ts'], env: {}, claudeCode: true }).claudeCode
-/** The same command, broken after the `--` so it fits the card. */
-const MCP_COMMAND_SHOWN = MCP_COMMAND.replace(' -- ', ' -- \\\n  ')
-const INSTALL = [`git clone ${REPO}.git OpenWove`, 'cd OpenWove', 'npm install', 'npm run dev'].join('\n')
+/** The note the app hands you, with example paths. */
+const SETUP_NOTE = setupPrompt({
+  command: '/Applications/OpenWove.app/Contents/MacOS/node',
+  args: ['/Applications/OpenWove.app/Contents/Resources/resources/mcp.mjs'],
+  env: { OPENWOVE_HOME: '~/OpenWove' },
+  claudeCode: true,
+})
 
-const NAV = [
-  { href: '#features', label: 'Features' },
-  { href: '#connect', label: 'Connect your agent' },
-  { href: '#private', label: 'Privacy' },
-]
+const FEATURES = [
+  ['Asks until it has earned it.', 'A step asks you every time until you have approved it three times in a row. One deny and it asks again.'],
+  ['Every cent in view.', 'Each bar, agent and run shows its cost, from the API’s own token counts at list prices. Guesses are marked with ~.'],
+  ['Try it for free.', 'Simulated runs play back made-up work, so you can see a flow before you spend anything.'],
+  ['Any key you have.', 'Add Anthropic, OpenAI or Google keys. They stay in your Keychain. Only Anthropic runs for real so far.'],
+  ['One folder only.', 'Agents read and write inside a single workspace folder. Nothing else on your Mac is in reach.'],
+  ['Written for you.', 'Tell it your company, where you are and your language once, and every agent writes for you.'],
+  ['Plain files.', 'A flow is one JSON file with a published schema. Any agent can write one, and you can read it.'],
+  ['Open source.', 'The code is on GitHub. Read it, build it yourself, or send a fix.'],
+] as const
+
+const NUMBERS = [
+  [`${DOWNLOAD_MB} MB`, 'to download.', `${INSTALLED_MB} MB once it’s installed.`],
+  [`${READY_SECONDS} s`, 'to ready.', 'From launch until the local runner answers. Median of three.'],
+  ['0', 'accounts.', 'Nothing to sign up for, and nothing to sign in to.'],
+  ['0', 'OpenWove servers.', 'The app and its runner stay on your Mac. Your key goes to your model provider and nowhere else.'],
+] as const
+
+const FAQ = [
+  ['What is OpenWove?', 'A Mac app for the work your coding agent plans. Your agent writes a flow: which agents do what, in which order, and which steps ask you first. OpenWove shows it on a canvas, runs it, and stops to ask before anything important happens.'],
+  ['Is it free?', 'Yes, for now. No account, no subscription. You pay your model provider for the runs you choose to make.'],
+  ['Which Macs?', 'Apple silicon, on macOS 14 or later. There is no Intel build yet.'],
+  ['Why does macOS say it can’t verify it?', 'It’s a beta, and not signed with an Apple developer certificate yet. Open System Settings › Privacy & Security, scroll down, and press Open Anyway. You only do it once. We’ll sign it before 1.0.'],
+  ['What happens to my API key?', 'It goes in your Mac’s Keychain and is used only by the runner on your Mac. It leaves your computer only in calls to the provider you added it for.'],
+  ['Which models run for real?', 'Claude, through Anthropic. OpenAI and Google keys can be saved, but flows that use those models play back as simulations for now.'],
+  ['How does my agent connect?', 'The app has a note you paste to your agent once. It adds OpenWove to itself. Claude Code, Cursor and anything else that speaks MCP can do it.'],
+  ['What can agents touch?', 'Only the OpenWove folder in your home directory, and inside it only the workspace folder for file steps.'],
+  ['Does it sync?', 'No. Everything stays on the Mac it runs on.'],
+  ['How do updates work?', 'Download the new version and drop it over the old one. Your flows, runs and settings live in your OpenWove folder, so they stay.'],
+] as const
 
 export function Landing() {
   useApplyColorMode()
-
   return (
     <div className="min-h-svh bg-background text-foreground">
-      <Nav />
-      <Hero />
-      <Intro />
-      <Features />
-      <Connect />
-      <Private />
-      <GetStarted />
+      <Top />
+      <main>
+        <Hero />
+        <Story />
+        <Numbers />
+        <Features />
+        <Questions />
+        <Closing />
+      </main>
       <Footer />
     </div>
   )
 }
 
-function Wrap({ className, children }: { className?: string; children: ReactNode }) {
-  return <div className={cn('mx-auto w-full max-w-6xl px-4 sm:px-6', className)}>{children}</div>
+function Column({ children, className }: { children: ReactNode; className?: string }) {
+  return <div className={cn('mx-auto w-full max-w-3xl px-4 sm:px-6', className)}>{children}</div>
 }
 
-function Eyebrow({ children }: { children: ReactNode }) {
-  return <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">{children}</p>
+function Wide({ children, className }: { children: ReactNode; className?: string }) {
+  return <div className={cn('mx-auto w-full max-w-5xl px-4 sm:px-6', className)}>{children}</div>
 }
 
-function Heading({ children, className }: { children: ReactNode; className?: string }) {
-  return <h2 className={cn('text-4xl font-semibold tracking-tight text-balance sm:text-5xl', className)}>{children}</h2>
-}
-
-function Brand() {
+function DownloadButton({ className }: { className?: string }) {
   return (
-    <a href="#" className="flex items-center gap-2.5 font-semibold tracking-tight">
-      <Logo />
-      OpenWove
-    </a>
+    <Button asChild size="lg" className={cn('h-10 rounded-full px-5', className)}>
+      <a href={DOWNLOAD_URL}>
+        <DownloadIcon /> Download for macOS
+      </a>
+    </Button>
   )
 }
 
-function Nav() {
+function Top() {
   return (
-    <nav className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur-md">
-      <Wrap className="flex h-16 items-center gap-8">
-        <Brand />
-        <div className="hidden gap-6 text-sm font-medium text-muted-foreground md:flex">
-          {NAV.map((link) => (
-            <a key={link.href} href={link.href} className="transition-colors hover:text-foreground">
-              {link.label}
-            </a>
-          ))}
-        </div>
-        <Button asChild size="lg" className="ml-auto rounded-full px-4">
-          <a href="#start">Get started</a>
-        </Button>
-      </Wrap>
-    </nav>
+    <header className="py-5">
+      <Wide className="flex items-center gap-3">
+        <a href="#" className="flex items-center gap-2 font-semibold tracking-tight">
+          <Logo className="size-5" />
+          OpenWove
+        </a>
+        <span className="hidden text-sm text-muted-foreground sm:inline">· beta</span>
+        <nav className="ml-auto flex items-center gap-5 text-sm text-muted-foreground">
+          <a href={REPO} className="hover:text-foreground">
+            GitHub
+          </a>
+          <Button asChild size="sm" className="rounded-full px-3.5">
+            <a href={DOWNLOAD_URL}>Download</a>
+          </Button>
+        </nav>
+      </Wide>
+    </header>
+  )
+}
+
+/** A Mac window around a picture of the app, so it reads as something you download. */
+function Window({ children }: { children: ReactNode }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border bg-card shadow-xl">
+      <div className="flex items-center gap-1.5 border-b bg-muted/60 px-4 py-3" aria-hidden>
+        <span className="size-3 rounded-full bg-failed" />
+        <span className="size-3 rounded-full bg-waiting" />
+        <span className="size-3 rounded-full bg-earned" />
+      </div>
+      {children}
+    </div>
   )
 }
 
 function Hero() {
   return (
-    <header className="pt-24 pb-16 text-center">
-      <Wrap>
-        <Tag tone="muted" className="mb-8 h-7 border-border bg-card px-3">
-          <span className="size-1.5 rounded-full bg-earned" />
-          Runs on your computer, with your own API key
-        </Tag>
-        <h1 className="mx-auto max-w-4xl text-5xl font-semibold tracking-tighter text-balance sm:text-6xl lg:text-7xl">
-          Multi-agent work, where you can see it.
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-pretty text-muted-foreground sm:text-xl">
-          Your agent sets up the flow. OpenWove lays it out on a canvas, runs it, and asks you before anything important
-          happens.
+    <section className="pt-16 pb-14 sm:pt-24">
+      <Column>
+        <Logo className="mb-8 size-12" />
+        <p className="text-xl leading-relaxed text-balance text-muted-foreground sm:text-2xl">
+          <strong className="font-semibold text-foreground">OpenWove</strong> is a place to see the work your agents plan.{' '}
+          <strong className="font-semibold text-foreground">Under {Math.ceil((DOWNLOAD_MB + 1) / 10) * 10} megabytes</strong>, a canvas, a
+          live timeline, and a window that stops to ask before anything important happens. Free, for any Apple-silicon Mac on macOS 14 or
+          later.
         </p>
-        <div className="mt-9 flex flex-wrap justify-center gap-3">
-          <Button asChild size="lg" className="h-11 rounded-full px-6">
-            <a href="#start">
-              Get started <ArrowRightIcon data-icon="inline-end" />
-            </a>
-          </Button>
-          <Button asChild size="lg" variant="outline" className="h-11 rounded-full px-6">
-            <a href={REPO}>View on GitHub</a>
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          <DownloadButton />
+          <Button asChild size="lg" variant="secondary" className="h-10 rounded-full px-5">
+            <a href="#numbers">The numbers</a>
           </Button>
         </div>
-        <div className="mt-20">
-          <CanvasPreview />
-        </div>
-      </Wrap>
-    </header>
-  )
-}
-
-function Intro() {
-  return (
-    <section className="py-28 text-center">
-      <Wrap className="flex flex-col items-center gap-6">
-        <Eyebrow>Introducing OpenWove</Eyebrow>
-        <p className="max-w-4xl text-2xl font-medium tracking-tight text-balance sm:text-3xl">
-          Coding agents can already split work across several agents.{' '}
-          <span className="text-muted-foreground">
-            What's missing is a place to see that plan, change it, and stay in charge while it runs.
-          </span>{' '}
-          OpenWove is that place.
+        <p className="mt-4 text-sm text-muted-foreground">
+          Version {VERSION} · {DOWNLOAD_MB} MB · Free · Intel Mac? Not yet.
         </p>
-      </Wrap>
+      </Column>
+      <Wide className="mt-14">
+        <Window>
+          <div className="bg-background p-4 sm:p-6">
+            <CanvasPreview />
+          </div>
+        </Window>
+      </Wide>
     </section>
   )
 }
 
-function Feature({
-  eyebrow,
-  title,
-  body,
-  points,
-  flip,
-  children,
-}: {
-  eyebrow: string
-  title: string
-  body: string
-  points: string[]
-  flip?: boolean
-  children: ReactNode
-}) {
+function Block({ title, body, children }: { title: string; body: string; children: ReactNode }) {
   return (
-    <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
-      <div className={cn(flip && 'md:order-2')}>
-        <Eyebrow>{eyebrow}</Eyebrow>
-        <Heading className="mt-3">{title}</Heading>
-        <p className="mt-4 text-lg text-muted-foreground">{body}</p>
-        <ul className="mt-6 flex flex-col gap-2.5">
-          {points.map((point) => (
-            <li key={point} className="flex gap-3">
-              <CheckIcon className="mt-1 size-4 shrink-0 text-earned" />
-              {point}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="rounded-2xl border bg-muted/50 p-6 sm:p-8">{children}</div>
-    </div>
-  )
-}
-
-function Features() {
-  return (
-    <section id="features" className="scroll-mt-16 pb-28">
-      <Wrap className="flex flex-col gap-28">
-        <Feature
-          eyebrow="Set up"
-          title="See the plan before it runs."
-          body="Every step is a card: which agent, what it does, and whether it asks you before acting. Agents that work at the same time sit side by side."
-          points={[
-            'Drag a card beside another to run them together',
-            'Open any step to read and edit its prompt',
-            'Try it as a free simulated run before spending anything',
-          ]}
-        >
-          <PromptPreview />
-        </Feature>
-        <Feature
-          flip
-          eyebrow="Live"
-          title="Watch every agent, and what it costs."
-          body="A timeline shows what each agent is doing right now. Every bar, agent and run shows its cost, from real token counts and list prices."
-          points={[
-            "Real runs use the API's own token counts",
-            'Estimates are marked with "~", so you know which is which',
-            'When a step fails, choose what happens next instead of starting over',
-          ]}
-        >
-          <TimelinePreview />
-        </Feature>
-        <Feature
-          eyebrow="Waiting for you"
-          title="Nothing important happens without you."
-          body="Steps that change things stop and ask, and you answer from one tray. A step asks every time until you've approved it three times in a row. Then it asks less."
-          points={['Trust is earned step by step, not given to the whole flow', 'One deny and it asks every time again']}
-        >
-          <WaitingPreview />
-        </Feature>
-      </Wrap>
+    <section className="py-12">
+      <Column>
+        <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
+        <p className="mt-2 text-lg text-muted-foreground">{body}</p>
+      </Column>
+      <Wide className="mt-8">
+        <div className="rounded-2xl border bg-muted/50 p-4 sm:p-8">{children}</div>
+      </Wide>
     </section>
   )
 }
 
-function CopyBlock({ text, children }: { text: string; children: ReactNode }) {
+function CopyBlock({ text }: { text: string }) {
   const [copied, copy] = useCopy(text)
   return (
     <div className="relative rounded-xl border bg-card p-4 pr-12 text-left">
-      <pre className="overflow-x-auto font-mono text-sm leading-relaxed">{children}</pre>
+      <pre className="font-mono text-sm leading-relaxed break-all whitespace-pre-wrap">{text}</pre>
       <Button variant="ghost" size="icon-sm" className="absolute top-2.5 right-2.5" onClick={copy} aria-label="Copy">
         {copied ? <CheckIcon /> : <CopyIcon />}
       </Button>
@@ -218,121 +178,123 @@ function CopyBlock({ text, children }: { text: string; children: ReactNode }) {
   )
 }
 
-function Connect() {
-  const steps = [
-    <>
-      Ask for multi-agent work: <em>"Turn brief.md into a landing page and a launch email."</em>
-    </>,
-    <>Your agent saves the flow, and it opens on the canvas.</>,
-    <>
-      Tweak it, press <span className="font-medium">Run flow</span>, and answer what's waiting for you.
-    </>,
-  ]
+function Story() {
   return (
-    <section id="connect" className="scroll-mt-16 border-y bg-muted/40 py-28">
-      <Wrap className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
-        <div>
-          <Eyebrow>Connect your agent</Eyebrow>
-          <Heading className="mt-3">Your agent writes the flow. You run it.</Heading>
-          <p className="mt-4 text-lg text-muted-foreground">
-            OpenWove comes with an MCP server. Claude Code, or any agent that speaks MCP, can save a flow and open it in
-            the app for you to look over. It never runs flows and never sees your key.
+    <>
+      <Block title="Your agent writes it. You read it." body="Open any step to see the agent, its model and its whole prompt. Change what you like and your agent reads your version next time.">
+        <PromptPreview />
+      </Block>
+      <Block title="It asks before it acts." body="A step that saves a file or sends something waits in one tray until you say yes.">
+        <WaitingPreview />
+      </Block>
+      <Block title="Everything it does, as it does it." body="A timeline of every agent, what it’s on, and what it has cost so far.">
+        <TimelinePreview />
+      </Block>
+      <section className="py-12">
+        <Column>
+          <h2 className="text-2xl font-semibold tracking-tight">Any agent can set it up.</h2>
+          <p className="mt-2 text-lg text-muted-foreground">
+            Paste one note to Claude Code, Cursor or anything that speaks MCP. It adds OpenWove to itself, and from then on you just ask for the work.
           </p>
-        </div>
-        <div className="flex flex-col gap-5">
-          <CopyBlock text={MCP_COMMAND}>
-            <span className="text-muted-foreground"># Add OpenWove to Claude Code once</span>
-            {`\n${MCP_COMMAND_SHOWN}`}
-          </CopyBlock>
-          <ol className="flex flex-col gap-4">
-            {steps.map((step, i) => (
-              <li key={i} className="flex gap-3.5">
-                <span className="grid size-7 shrink-0 place-items-center rounded-full border bg-card text-sm font-medium tabular-nums">
-                  {i + 1}
-                </span>
-                <span className="pt-0.5">{step}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </Wrap>
+          <div className="mt-6">
+            <CopyBlock text={SETUP_NOTE} />
+          </div>
+        </Column>
+      </section>
+    </>
+  )
+}
+
+function Numbers() {
+  return (
+    <section id="numbers" className="scroll-mt-8 py-16">
+      <Column>
+        <h2 className="text-2xl font-semibold tracking-tight">Light enough to forget it’s there.</h2>
+        <p className="mt-2 text-lg text-muted-foreground">Measured on an Apple-silicon Mac running macOS 26, from a cold start.</p>
+        <dl className="mt-10 grid gap-x-8 gap-y-10 sm:grid-cols-2">
+          {NUMBERS.map(([figure, label, note]) => (
+            <div key={label}>
+              <dt className="flex items-baseline gap-2">
+                <span className="text-5xl font-semibold tracking-tighter tabular-nums">{figure}</span>
+                <span className="text-lg font-medium">{label}</span>
+              </dt>
+              <dd className="mt-1 text-muted-foreground">{note}</dd>
+            </div>
+          ))}
+        </dl>
+      </Column>
     </section>
   )
 }
 
-const PRIVATE = [
-  {
-    icon: MonitorIcon,
-    title: 'Runs locally',
-    body: 'The app and its runner run on your machine. No account, and no OpenWove servers in the middle.',
-  },
-  {
-    icon: KeyRoundIcon,
-    title: 'Bring your own key',
-    body: 'Your API keys stay on your computer. Your model provider bills you directly; OpenWove never does.',
-  },
-  {
-    icon: FolderLockIcon,
-    title: 'One folder only',
-    body: 'Agents read and write only inside workspace/. Nothing else on your computer is in reach.',
-  },
-]
-
-function Private() {
+function Features() {
   return (
-    <section id="private" className="scroll-mt-16 py-28 text-center">
-      <Wrap>
-        <Eyebrow>Private by default</Eyebrow>
-        <Heading className="mx-auto mt-3 max-w-2xl">Your computer. Your key. Your files.</Heading>
-        <div className="mt-14 grid gap-4 text-left md:grid-cols-3">
-          {PRIVATE.map(({ icon: Icon, title, body }) => (
-            <Card key={title}>
-              <CardHeader className="gap-3">
-                <Icon className="mb-3 size-5" />
-                <CardTitle className="text-lg font-semibold tracking-tight">{title}</CardTitle>
-                <CardDescription className="text-base">{body}</CardDescription>
-              </CardHeader>
-            </Card>
+    <section className="py-16">
+      <Column>
+        <ul className="grid gap-x-8 gap-y-6 sm:grid-cols-2">
+          {FEATURES.map(([lead, body]) => (
+            <li key={lead}>
+              <strong className="font-semibold">{lead}</strong> <span className="text-muted-foreground">{body}</span>
+            </li>
+          ))}
+        </ul>
+      </Column>
+    </section>
+  )
+}
+
+function Questions() {
+  return (
+    <section className="py-16">
+      <Column>
+        <h2 className="text-2xl font-semibold tracking-tight">Questions? Answers.</h2>
+        <div className="mt-6 divide-y border-y">
+          {FAQ.map(([question, answer]) => (
+            <details key={question} className="group py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium">
+                {question}
+                <span className="text-muted-foreground transition-transform group-open:rotate-45" aria-hidden>
+                  +
+                </span>
+              </summary>
+              <p className="mt-2 text-muted-foreground">{answer}</p>
+            </details>
           ))}
         </div>
-      </Wrap>
+      </Column>
     </section>
   )
 }
 
-function GetStarted() {
+function Closing() {
   return (
-    <section id="start" className="scroll-mt-16 border-t py-28 text-center">
-      <Wrap className="flex flex-col items-center">
-        <Heading>Weave your first flow.</Heading>
-        <p className="mt-5 max-w-xl text-lg text-muted-foreground">
-          Simulated runs are free. Add an Anthropic key when you're ready for real ones.
+    <section className="py-16">
+      <Column>
+        <p className="text-xl text-balance text-muted-foreground sm:text-2xl">
+          OpenWove is free, for Apple-silicon Macs on macOS 14 or later. Your agent plans, you stay in charge, and nothing leaves your Mac but the
+          calls you choose to make.
         </p>
-        <div className="mt-10 w-full max-w-xl">
-          <CopyBlock text={INSTALL}>{INSTALL}</CopyBlock>
-        </div>
-      </Wrap>
+        <DownloadButton className="mt-8" />
+      </Column>
     </section>
   )
 }
 
 function Footer() {
   return (
-    <footer className="border-t py-12 text-sm text-muted-foreground">
-      <Wrap className="flex flex-wrap items-center gap-6">
-        <Brand />
-        <span>© 2026</span>
-        <div className="flex gap-6 sm:ml-auto">
-          {NAV.slice(0, 2).map((link) => (
-            <a key={link.href} href={link.href} className="hover:text-foreground">
-              {link.label}
-            </a>
-          ))}
-          <a href={REPO} className="hover:text-foreground">
-            GitHub
-          </a>
-        </div>
-      </Wrap>
+    <footer className="py-10 text-sm text-muted-foreground">
+      <Column className="flex flex-wrap gap-x-4 gap-y-2">
+        <span>
+          Version {VERSION} · {DOWNLOAD_MB} MB · Intel Mac?
+        </span>
+        <a href="#numbers" className="hover:text-foreground">
+          The numbers
+        </a>
+        <a href={REPO} className="hover:text-foreground">
+          GitHub
+        </a>
+        <span className="sm:ml-auto">© 2026 OpenWove</span>
+      </Column>
     </footer>
   )
 }

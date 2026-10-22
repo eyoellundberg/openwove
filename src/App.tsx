@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react'
 import { LiveHeader } from '@/components/live/live-header'
 import { LiveView } from '@/components/live/live-view'
 import { AppSidebar } from '@/components/shell/app-sidebar'
+import { OnboardingDialog } from '@/components/shell/onboarding-dialog'
 import { SettingsDialog } from '@/components/shell/settings-dialog'
 import { UsagePage } from '@/components/shell/usage-page'
 import { PromptDialog } from '@/components/setup/prompt-dialog'
@@ -70,6 +71,7 @@ export default function App() {
       <PromptDialog />
       <SetupDialog />
       <SettingsDialog />
+      <OnboardingDialog />
     </TooltipProvider>
   )
 }

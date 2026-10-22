@@ -1,12 +1,13 @@
 /** Talks to the local runner (`npm run runner`), which Vite proxies under /api. */
 import type { RunnerEvent } from './engine'
 import type { FlowFile } from './flow-file'
-import type { AppEvent, FlowListing, ProviderStatus, Resolution, RunnerHealth } from './runner-types'
+import type { AppEvent, FlowListing, Profile, ProviderStatus, Resolution, RunnerHealth } from './runner-types'
+import type { Provider } from './types'
 import type { RunSummary } from './usage'
 
-export type { AppEvent, FlowListing, ProviderStatus, Resolution, RunnerHealth } from './runner-types'
+export type { AppEvent, FlowListing, Profile, ProviderStatus, Resolution, RunnerHealth } from './runner-types'
 
-async function request<T>(method: 'GET' | 'POST' | 'PUT', path: string, body?: unknown): Promise<T> {
+async function request<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, body?: unknown): Promise<T> {
   const res = await fetch(`/api${path}`, {
     method,
     ...(body === undefined ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
@@ -22,6 +23,11 @@ const post = <T>(path: string, body?: unknown) => request<T>('POST', path, body)
 
 export const runner = {
   health: () => get<RunnerHealth>('/health'),
+  /** What the person said about themselves, or null before they have. */
+  profile: () => get<Profile | null>('/profile'),
+  saveProfile: (profile: Profile) => request<Profile>('PUT', '/profile', profile),
+  saveKey: (provider: Provider, key: string) => request<{ ok: true }>('PUT', `/keys/${provider}`, { key }),
+  removeKey: (provider: Provider) => request<{ ok: true }>('DELETE', `/keys/${provider}`),
   listFlows: () => get<FlowListing[]>('/flows'),
   getFlow: (file: string) => get<unknown>(`/flows/${encodeURIComponent(file)}`),
   saveFlow: (file: string, flow: FlowFile) => request<{ file: string }>('PUT', `/flows/${encodeURIComponent(file)}`, flow),

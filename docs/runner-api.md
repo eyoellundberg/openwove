@@ -10,7 +10,9 @@ Bodies are JSON. Errors come back as `{ "error": "A sentence you can show the pe
 
 | Method and path | Returns |
 |---|---|
-| `GET /health` | `{ providers: { anthropic, openai, google }, tools: ["files"], workspace, root }`. Each provider is `true` when it can run for real. |
+| `GET /health` | `{ providers: { anthropic, openai, google }, tools: ["files"], workspace, root }`. Each provider is `true` when you've added a key for it. Only Anthropic runs for real so far. |
+| `GET /profile`, `PUT /profile` | What the person told the welcome screen: `{ company, country, language }` (country is a two-letter code), or `null` before they have. Saved in `profile.json` and added to every agent's system prompt. |
+| `PUT /keys/:provider`, `DELETE /keys/:provider` | Add or remove a key (`anthropic`, `openai`, `google`), body `{ key }`. Keys go in and never come out; `/health` only says whether one exists. In the Mac app they're kept in the Keychain (service `OpenWove`); run from source, in `.env.local`. |
 | `GET /status` | `{ anthropic: { level, text, incident?, checkedAt } }`, from Anthropic's public status page. `level` is `ok`, `slow`, `down` or `unknown`. Cached for 30 seconds. |
 
 ## Flows

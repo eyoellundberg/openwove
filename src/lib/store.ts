@@ -12,7 +12,7 @@ import {
 import { flowToState, stateToFlow } from './convert'
 import * as engine from './engine'
 import type { RunSummary } from './usage'
-import { runner, type AppEvent, type FlowListing, type ProviderStatus, type Resolution } from './runner-client'
+import { runner, type AppEvent, type FlowListing, type Profile, type ProviderStatus, type Resolution } from './runner-client'
 import type { RunnerStatus } from './runner-status'
 import { initialHistory, makeStep, SAMPLE_FLOW } from './seed'
 import { readStored, writeStored } from './storage'
@@ -25,6 +25,10 @@ interface FlowStore extends engine.Sim {
   /** The mode the app starts in, saved on this computer. */
   defaultMode: RunMode
   runnerStatus: RunnerStatus
+  /** What they told us on first launch; null until they have. */
+  profile: Profile | null
+  /** Whether the runner has said yet, so the welcome doesn't flash for someone who already finished it. */
+  profileChecked: boolean
   /** Whether Claude is up; null until the runner has answered once. */
   claudeStatus: ProviderStatus | null
   /** Every saved run, newest first; null until the runner has answered. */
@@ -64,6 +68,7 @@ interface FlowStore extends engine.Sim {
   setView: (view: View) => void
   setMode: (mode: RunMode) => void
   checkRunner: () => Promise<void>
+  saveProfile: (profile: Profile) => Promise<void>
   loadFlow: (input: unknown) => Promise<boolean>
   openFlowFile: (file: string) => Promise<void>
   exportFlow: () => string
@@ -160,6 +165,8 @@ export const useFlow = create<FlowStore>()((set, get) => {
     mode: savedMode(),
     defaultMode: savedMode(),
     runnerStatus: { state: 'checking' },
+    profile: null,
+    profileChecked: false,
     claudeStatus: null,
     usage: null,
     flowFiles: [],
@@ -297,10 +304,13 @@ export const useFlow = create<FlowStore>()((set, get) => {
         const [health, flowFiles] = await Promise.all([runner.health(), runner.listFlows()])
         set({ runnerStatus: { state: 'ready', health }, flowFiles })
         listenForAgent()
+        if (!get().profileChecked) set({ profile: await runner.profile(), profileChecked: true })
       } catch {
         set({ runnerStatus: { state: 'offline' }, flowFiles: [] })
       }
     },
+
+    saveProfile: async (profile) => set({ profile: await runner.saveProfile(profile) }),
 
     loadFlow: async (input) => {
       // The validator (zod) loads only when a flow file is opened.

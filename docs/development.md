@@ -14,7 +14,7 @@ cp .env.example .env.local   # only for real runs
 | `ANTHROPIC_API_KEY` | Runner | Your Anthropic key. `ANTHROPIC_AUTH_TOKEN` works too. Without either, simulated runs still work. |
 | `RUNNER_PORT` | Runner, Vite proxy | The runner's port. Defaults to 5189. |
 
-`.env.local` is ignored by git. Only the runner reads it.
+`.env.local` is ignored by git. Only the runner reads it. You can also add keys in the app's Settings, which writes this file (and the Keychain, in the Mac app).
 
 ## Running it
 
@@ -74,7 +74,7 @@ Write from the person's side, plainly:
 
 - "Waiting for you", not "Pending approvals".
 - "Runs on your computer", not "Local-first execution environment".
-- Error messages say what happened and what to do: "Add ANTHROPIC_API_KEY to .env.local and restart the runner."
+- Error messages say what happened and what to do: "Add your Anthropic key in Settings."
 
 ## Common changes
 

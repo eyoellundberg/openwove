@@ -6,10 +6,13 @@ import Anthropic from '@anthropic-ai/sdk'
 import { RUNNABLE_TOOLS } from '../src/lib/catalog'
 import { parseFlow } from '../src/lib/flow-file'
 import { listFlows, readFlow, ROOT, RUNNER_PORT as PORT, saveFlow, WORKSPACE } from './flows'
+import type { Provider } from '../src/lib/types'
 import { type AppEvent, RESOLUTIONS, type Resolution, type RunnerHealth } from '../src/lib/runner-types'
 import { type RunSummary, summarize, type StoredRun } from '../src/lib/usage'
 import { API_TRIES, Run } from './run'
 import { loadRuns, saveRun } from './run-store'
+import { readProfile, profileContext, writeProfile } from './profile'
+import { getKey, PROVIDER_IDS, removeKey, setKey } from './secrets'
 import { claudeStatus } from './status'
 
 // First launch of the app: put the sample flows and their inputs in the person's own folder.
@@ -31,7 +34,7 @@ const CONTENT_TYPES: Record<string, string> = {
   '.png': 'image/png',
 }
 
-const API_ROUTES = new Set(['health', 'status', 'flows', 'runs', 'app-events'])
+const API_ROUTES = new Set(['health', 'status', 'flows', 'runs', 'app-events', 'profile', 'keys'])
 
 /** A file from the built UI, or index.html for any page the app routes itself. */
 function serveStatic(res: ServerResponse, pathname: string) {
@@ -42,8 +45,9 @@ function serveStatic(res: ServerResponse, pathname: string) {
   res.end(readFileSync(file))
 }
 
-const hasAnthropic = Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN)
-const client = hasAnthropic ? new Anthropic({ maxRetries: API_TRIES - 1 }) : null
+const hasAnthropic = () => Boolean(getKey('anthropic') || process.env.ANTHROPIC_AUTH_TOKEN)
+/** Built when a run starts, so a key added in the app works without a restart. */
+const makeClient = () => new Anthropic({ maxRetries: API_TRIES - 1, ...(getKey('anthropic') ? { apiKey: getKey('anthropic') } : {}) })
 const runs = new Map<string, Run>()
 /** Finished runs, from this runner and from before it was restarted. Served from their records, which don't change. */
 const stored = new Map<string, StoredRun>(loadRuns().map((r) => [r.id, r]))
@@ -112,12 +116,29 @@ const server = createServer(async (req, res) => {
   try {
     if (req.method === 'GET' && url.pathname === '/health') {
       const health: RunnerHealth = {
-        providers: { anthropic: hasAnthropic, openai: false, google: false },
+        providers: { anthropic: hasAnthropic(), openai: Boolean(getKey('openai')), google: Boolean(getKey('google')) },
         tools: [...RUNNABLE_TOOLS],
         workspace: WORKSPACE,
         root: ROOT,
       }
       return send(res, 200, health)
+    }
+
+    if (req.method === 'GET' && url.pathname === '/profile') return send(res, 200, readProfile())
+    if (req.method === 'PUT' && url.pathname === '/profile') return send(res, 200, writeProfile(await readJson(req)))
+
+    // Keys go in, never out: /health only says whether one is there.
+    if (parts[0] === 'keys' && PROVIDER_IDS.includes(parts[1] as Provider)) {
+      const provider = parts[1] as Provider
+      if (req.method === 'PUT') {
+        const { key } = (await readJson(req)) as { key?: string }
+        const problem = setKey(provider, String(key ?? '').trim())
+        return problem ? send(res, 400, { error: problem }) : send(res, 200, { ok: true })
+      }
+      if (req.method === 'DELETE') {
+        removeKey(provider)
+        return send(res, 200, { ok: true })
+      }
     }
 
     if (req.method === 'GET' && url.pathname === '/status') return send(res, 200, { anthropic: await claudeStatus() })
@@ -153,12 +174,12 @@ const server = createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/runs') {
-      if (!client) return send(res, 400, { error: 'Add ANTHROPIC_API_KEY to .env.local and restart the runner.' })
+      if (!hasAnthropic()) return send(res, 400, { error: 'Add your Anthropic key in Settings first.' })
       const body = (await readJson(req)) as { flow?: unknown; streaks?: Record<string, number> }
       const parsed = parseFlow(body?.flow)
       if (!parsed.ok) return send(res, 400, { error: `The flow has a problem. ${parsed.error}` })
       const id = `live-${Date.now().toString(36)}-${++runCounter}`
-      const run = new Run(id, parsed.flow, body.streaks ?? {}, WORKSPACE, client, scheduleSave)
+      const run = new Run(id, parsed.flow, body.streaks ?? {}, WORKSPACE, makeClient(), scheduleSave, profileContext(readProfile()))
       runs.set(id, run)
       run.start().catch((error) => console.error(`Run ${id} crashed:`, error))
       return send(res, 200, { runId: id })
@@ -222,5 +243,5 @@ const server = createServer(async (req, res) => {
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`OpenWove runner on http://localhost:${PORT}`)
   console.log(`Workspace: ${WORKSPACE}`)
-  console.log(hasAnthropic ? 'Anthropic: ready' : 'Anthropic: no key. Add ANTHROPIC_API_KEY to .env.local.')
+  console.log(hasAnthropic() ? 'Anthropic: ready' : 'Anthropic: no key yet. Add one in the app’s Settings.')
 })

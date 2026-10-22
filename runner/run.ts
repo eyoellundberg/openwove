@@ -29,18 +29,21 @@ export class Run {
   private streaks: Record<string, number>
   private workspace: string
   private client: Anthropic
+  /** What the person told the app about themselves, passed to every agent. */
+  private about: string
   private startedAt = Date.now()
   private endedAt: number | null = null
   readonly id: string
   /** Called after every event, so the run can be saved as it goes. */
   private onChange?: () => void
 
-  constructor(id: string, flow: FlowFile, streaks: Record<string, number>, workspace: string, client: Anthropic, onChange?: (run: Run) => void) {
+  constructor(id: string, flow: FlowFile, streaks: Record<string, number>, workspace: string, client: Anthropic, onChange?: (run: Run) => void, about = '') {
     this.id = id
     this.flow = flow
     this.streaks = streaks
     this.workspace = workspace
     this.client = client
+    this.about = about
     this.onChange = onChange && (() => onChange(this))
   }
 
@@ -169,7 +172,7 @@ export class Run {
         // Caches everything up to the latest message, so each turn of the tool loop re-reads the tools, the
         // system prompt and the conversation so far from cache instead of paying for them again.
         cache_control: { type: 'ephemeral' },
-        system: systemPrompt(agent, step, this.workspace, Boolean(files)),
+        system: systemPrompt(agent, step, this.workspace, Boolean(files), this.about),
         output_config: { effort: agent.effort },
         ...(files ? { tools: files.tools } : {}),
         ...(FALLBACK_MODELS.has(agent.model)
@@ -246,14 +249,15 @@ export class Run {
   }
 }
 
-function systemPrompt(agent: FlowAgent, step: FlowStep, workspace: string, hasFiles: boolean) {
+function systemPrompt(agent: FlowAgent, step: FlowStep, workspace: string, hasFiles: boolean, about: string) {
   return [
     `You are ${agent.name}, one agent in a small team working through a flow. Your step: ${step.task}.`,
     hasFiles
       ? `You can read and write files in the workspace folder ${workspace}. Use paths inside it, e.g. ${workspace}/notes.md. Create folders before writing into them.`
       : 'You have no tools for this step; answer in text.',
     'Do only your step. When you are done, reply with two or three plain sentences on what you did and anything you were unsure about.',
-  ].join('\n\n')
+    about,
+  ].filter(Boolean).join('\n\n')
 }
 
 function logLine(call: Anthropic.Beta.BetaToolUseBlock, failed: boolean) {
@@ -281,7 +285,7 @@ function apiMessage(error: InstanceType<typeof Anthropic.APIError>) {
 }
 
 function describe(error: unknown) {
-  if (error instanceof Anthropic.AuthenticationError) return 'The Anthropic API key was rejected. Check ANTHROPIC_API_KEY in .env.local.'
+  if (error instanceof Anthropic.AuthenticationError) return 'The Anthropic API key was rejected. Check it in Settings.'
   if (error instanceof Anthropic.NotFoundError) return `Claude doesn’t have that model for your key (${apiMessage(error)}).`
   if (error instanceof Anthropic.RateLimitError) return `Claude is rate limiting this key, even after ${API_TRIES} tries. Give it a minute.`
   if (error instanceof Anthropic.APIConnectionError) return `Couldn’t reach Claude after ${API_TRIES} tries. Check your connection.`

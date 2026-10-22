@@ -6,7 +6,7 @@ import type { Provider } from './types'
 
 /** `GET /health`. */
 export interface RunnerHealth {
-  /** True for each provider that can run for real. */
+  /** True for each provider you've added a key for. Only Anthropic runs for real so far. */
   providers: Record<Provider, boolean>
   /** Tool ids the runner connects for real runs. */
   tools: string[]
@@ -42,3 +42,12 @@ export interface AppEvent {
 /** What you can tell a step that ran into trouble. `POST /runs/:id/resolve`. */
 export const RESOLUTIONS = ['retry', 'skip', 'stop'] as const
 export type Resolution = (typeof RESOLUTIONS)[number]
+
+/** What the person told the app about themselves. Agents get it as context. `GET` and `PUT /profile`. */
+export interface Profile {
+  company: string
+  /** A country's two-letter code, e.g. "SE". */
+  country: string
+  /** A language code, e.g. "sv". Agents write in it unless a task says otherwise. */
+  language: string
+}

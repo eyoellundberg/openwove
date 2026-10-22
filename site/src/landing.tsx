@@ -269,7 +269,7 @@ const PRIVATE = [
   {
     icon: KeyRoundIcon,
     title: 'Bring your own key',
-    body: 'Your API key stays in .env.local. Your model provider bills you directly; OpenWove never does.',
+    body: 'Your API keys stay on your computer. Your model provider bills you directly; OpenWove never does.',
   },
   {
     icon: FolderLockIcon,

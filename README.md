@@ -65,7 +65,8 @@ Without MCP, an agent can follow [`skills/openwove-builder/SKILL.md`](skills/ope
 ## Your data
 
 - Everything runs on your computer. There's no account and no OpenWove server in between.
-- Your API key stays in `.env.local` and is used only by the runner.
+- Your API keys stay on your computer, in the Keychain in the Mac app or in `.env.local` from source, and only the runner uses them. Add them in **Settings → Models and keys**.
+- The welcome screen's company, country and language are saved in your OpenWove folder and given to your agents as context.
 - Agents can only reach `workspace/`. Runs are saved to `runs/`, and neither folder's contents are committed.
 
 ## Commands

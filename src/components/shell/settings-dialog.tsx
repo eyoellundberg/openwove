@@ -1,8 +1,5 @@
 import {
   BotIcon,
-  CheckIcon,
-  CircleAlertIcon,
-  CircleDashedIcon,
   CreditCardIcon,
   HardDriveIcon,
   KeyRoundIcon,
@@ -12,19 +9,14 @@ import {
 } from 'lucide-react'
 import { useState, type ComponentType, type ReactNode } from 'react'
 import { ModeSelect } from '@/components/shared/mode-select'
+import { KeyList } from '@/components/shell/key-list'
+import { ProfileFields } from '@/components/shell/profile-fields'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { setThemePreference, useThemePreference, type ThemePreference } from '@/hooks/use-color-mode'
 import { useFlow } from '@/lib/store'
-import type { Provider } from '@/lib/types'
-import { cn } from '@/lib/utils'
-
-const PROVIDERS: { id: Provider; name: string; env: string }[] = [
-  { id: 'anthropic', name: 'Anthropic (Claude)', env: 'ANTHROPIC_API_KEY' },
-  { id: 'openai', name: 'OpenAI', env: 'OPENAI_API_KEY' },
-  { id: 'google', name: 'Google (Gemini)', env: 'GOOGLE_API_KEY' },
-]
+import type { Profile } from '@/lib/runner-client'
 
 function Group({ title, description, children }: { title?: string; description?: string; children: ReactNode }) {
   return (
@@ -47,6 +39,24 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
+function YouGroup() {
+  const saved = useFlow((s) => s.profile)
+  const save = useFlow((s) => s.saveProfile)
+  const [draft, setDraft] = useState<Profile>(saved ?? { company: '', country: '', language: 'en' })
+  const changed = JSON.stringify(draft) !== JSON.stringify(saved)
+
+  return (
+    <Group title="About you" description="Your agents get this as context, so they write for you.">
+      <ProfileFields value={draft} onChange={setDraft} />
+      <div>
+        <Button disabled={!changed} onClick={() => save(draft)}>
+          Save
+        </Button>
+      </div>
+    </Group>
+  )
+}
+
 function General() {
   const theme = useThemePreference()
   const defaultMode = useFlow((s) => s.defaultMode)
@@ -54,6 +64,7 @@ function General() {
 
   return (
     <div className="flex flex-col gap-8">
+      <YouGroup />
       <Group title="Appearance">
         <Row label="Theme">
           <Select value={theme} onValueChange={(v) => setThemePreference(v as ThemePreference)}>
@@ -77,39 +88,10 @@ function General() {
   )
 }
 
-function ProviderRow({ provider }: { provider: (typeof PROVIDERS)[number] }) {
-  const status = useFlow((s) => s.runnerStatus)
-  const ready = status.state === 'ready'
-  const connected = status.state === 'ready' && status.health.providers[provider.id]
-  const runsForReal = provider.id === 'anthropic'
-  const Icon = connected ? CheckIcon : runsForReal && ready ? CircleAlertIcon : CircleDashedIcon
-  const note = !runsForReal
-    ? 'Runs in simulated mode only for now'
-    : !ready
-      ? 'Start the runner to check'
-      : connected
-        ? 'Key found'
-        : `Add ${provider.env} to .env.local, then restart the runner`
-
-  return (
-    <div className="flex items-center gap-3">
-      <Icon className={cn('size-4', connected ? 'text-earned' : runsForReal && ready ? 'text-waiting' : 'text-muted-foreground')} />
-      <div className="flex min-w-0 flex-col">
-        <span className="text-sm">{provider.name}</span>
-        <span className="text-xs text-muted-foreground">{note}</span>
-      </div>
-    </div>
-  )
-}
-
 function Models() {
   return (
-    <Group description="Put keys in the .env.local file next to the app. The runner reads them when it starts, and OpenWove never stores them.">
-      <div className="flex flex-col gap-3">
-        {PROVIDERS.map((p) => (
-          <ProviderRow key={p.id} provider={p} />
-        ))}
-      </div>
+    <Group description="Add any keys you have. They stay on this computer: in the Keychain in the Mac app, or in .env.local when run from source.">
+      <KeyList />
     </Group>
   )
 }

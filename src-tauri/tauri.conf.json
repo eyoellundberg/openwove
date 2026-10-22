@@ -18,6 +18,6 @@
     "externalBin": ["binaries/node"],
     "resources": { "resources/": "resources/" },
     "category": "DeveloperTool",
-    "macOS": { "minimumSystemVersion": "14.0" }
+    "macOS": { "minimumSystemVersion": "14.0", "signingIdentity": "-" }
   }
 }

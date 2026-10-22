@@ -184,7 +184,10 @@ export function AppSidebar() {
         checkClaude()
       }}
     >
-      <SidebarHeader>
+      {/* In the Mac app this is the top of the window: drag it to move, double-click to zoom. */}
+      <SidebarHeader data-tauri-drag-region="deep">
+        {/* Room for the traffic lights. */}
+        <div className="hidden h-6 desktop:block" />
         <div className="flex items-center gap-2 px-2 py-1.5 font-semibold tracking-tight">
           <Logo className="size-5" />
           <span className="group-data-[collapsible=icon]:hidden">OpenWove</span>

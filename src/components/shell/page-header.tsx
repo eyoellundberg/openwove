@@ -12,7 +12,7 @@ export function PageHeader({
   children?: ReactNode
 }) {
   return (
-    <header className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-3 sm:px-6">
+    <header data-tauri-drag-region="deep" className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-3 sm:px-6">
       <SidebarTrigger />
       <div className="flex min-w-0 flex-1 flex-col">
         <h1 className="truncate text-base font-semibold">{title}</h1>

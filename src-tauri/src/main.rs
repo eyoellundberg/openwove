@@ -57,6 +57,10 @@ fn open_window(app: &tauri::AppHandle) -> tauri::Result<()> {
         .title_bar_style(tauri::TitleBarStyle::Overlay)
         .hidden_title(true)
         .transparent(true)
+        // Like any Mac app: the first click on an inactive window also presses what's under it.
+        .accept_first_mouse(true)
+        // The page lays itself out around the traffic lights when it knows it's in the app.
+        .initialization_script("document.documentElement.classList.add('desktop')")
         .build()?;
 
     // macOS's own frosted material behind the window. Only shows where the page is see-through.

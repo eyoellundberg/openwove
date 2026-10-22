@@ -6,6 +6,8 @@ import { defineConfig } from 'vite'
 // The marketing site: `npm run site`. It shares the app's theme and shadcn components through `@/`.
 export default defineConfig({
   root: path.resolve(import.meta.dirname, 'site'),
+  // The same icons as the app, so there's one copy of the mark to keep.
+  publicDir: path.resolve(import.meta.dirname, 'public'),
   plugins: [react(), tailwindcss()],
   build: { outDir: path.resolve(import.meta.dirname, 'dist-site'), emptyOutDir: true },
   resolve: {

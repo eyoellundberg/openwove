@@ -9,9 +9,9 @@ export function Logo({ className }: { className?: string }) {
         <path d="M7 11.5h18M7 20.5h18M11.5 7v18M20.5 7v18" strokeLinecap="round" />
         {/* Each crossing cuts the strand that goes under, then redraws the one on top. */}
         <path d="M7.8 11.5h7.4M16.8 20.5h7.4" strokeWidth="7" className="stroke-foreground" />
-        <path d="M7.4 11.5h7.8M16.8 20.5h7.8" />
+        <path d="M7.4 11.5h8.2M16.4 20.5h8.2" />
         <path d="M20.5 7.8v7.4M11.5 16.8v7.4" strokeWidth="7" className="stroke-foreground" />
-        <path d="M20.5 7.4v7.8M11.5 16.8v7.8" />
+        <path d="M20.5 7.4v8.2M11.5 16.4v8.2" />
       </g>
     </svg>
   )

@@ -5,8 +5,8 @@
     <path d="M11.5 7v18M20.5 7v18" stroke="#fafafa"/>
     <!-- Over and under: each crossing cuts the strand that goes beneath. -->
     <path d="M7.8 11.5h7.4M16.8 20.5h7.4" stroke="#18181b" stroke-width="7" stroke-linecap="butt"/>
-    <path d="M7.4 11.5h7.8M16.8 20.5h7.8" stroke="#fafafa" stroke-linecap="butt"/>
+    <path d="M7.4 11.5h8.2M16.4 20.5h8.2" stroke="#fafafa" stroke-linecap="butt"/>
     <path d="M20.5 7.8v7.4M11.5 16.8v7.4" stroke="#18181b" stroke-width="7" stroke-linecap="butt"/>
-    <path d="M20.5 7.4v7.8M11.5 16.8v7.8" stroke="#fafafa" stroke-linecap="butt"/>
+    <path d="M20.5 7.4v8.2M11.5 16.4v8.2" stroke="#fafafa" stroke-linecap="butt"/>
   </g>
 </svg>

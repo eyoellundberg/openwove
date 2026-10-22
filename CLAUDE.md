@@ -8,6 +8,7 @@ A friendly place to see and tweak multi-agent flows. A person's own agent writes
 - `npm run runner` — the local runner on port 5189 (Vite proxies `/api` to it). Needs `ANTHROPIC_API_KEY` in `.env.local`.
 - `npm run check-flow flows/<file>.json` — validate a flow file.
 - `npm run mcp` — the MCP server a person's agent connects to (stdio; `.mcp.json` registers it for Claude Code here).
+- `npm run desktop:build` — the Mac app (`src-tauri/`, Tauri; needs Rust). See `docs/development.md`.
 - `npm run site` / `npm run site:build` — the marketing site in `site/` (React, built with the app's theme and shadcn components through `@/`; output in `dist-site/`).
 - `npx tsc -b && npm run lint && npm run build && npm run site:build` — what CI checks (plus `check-flow` on every file in `flows/`); run it before committing.
 

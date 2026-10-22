@@ -27,6 +27,20 @@ cp .env.example .env.local   # only for real runs
 
 To run a second copy alongside the first, for example from another worktree, set `RUNNER_PORT=5199` for both the runner and the app. [`.claude/launch.json`](../.claude/launch.json) has these set up for Claude Code's preview: `openwove`, `openwove-alt`, `runner-alt` and `site`.
 
+## The desktop app
+
+`src-tauri/` wraps the app in a Tauri window (macOS, Apple silicon). It starts the runner with a bundled Node, and the runner serves the built UI itself, since there's no Vite proxy in a packaged app.
+
+```sh
+npm run desktop:build   # needs Rust (rustup.rs)
+```
+
+`scripts/build-desktop.mjs` gathers the built UI, the runner and file tool as single files (esbuild), the sample flows and an arm64-only Node into `src-tauri/`; `tauri build` then makes the `.app` and `.dmg` under `src-tauri/target/release/bundle/`. The result is unsigned for now.
+
+- The packaged runner reads and writes `~/OpenWove` (flows, workspace, runs, `.env.local`) instead of the repo. A first launch copies the samples there. It listens on port 5189, the same as `npm run runner`, so quit one before starting the other.
+- These variables are set by the app and read by the runner: `OPENWOVE_HOME`, `OPENWOVE_STATIC`, `OPENWOVE_SEED`, `OPENWOVE_FILES_SERVER`.
+- If the build fails with `unknown architecture` in a `.tbd` file, your Command Line Tools' default SDK is newer than its linker. Build with `SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk` (any older SDK in that folder).
+
 ## Before you commit
 
 ```sh

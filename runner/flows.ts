@@ -7,7 +7,8 @@ import { flowFileName } from '../src/lib/flow-name'
 import { MODELS } from '../src/lib/models'
 import type { FlowListing } from '../src/lib/runner-types'
 
-export const ROOT = resolve(import.meta.dirname, '..')
+/** The repo, when running from source. The app sets OPENWOVE_HOME to the person's own folder instead. */
+export const ROOT = resolve(process.env.OPENWOVE_HOME ?? resolve(import.meta.dirname, '..'))
 export const FLOWS = join(ROOT, 'flows')
 export const WORKSPACE = join(ROOT, 'workspace')
 export const RUNNER_PORT = Number(process.env.RUNNER_PORT ?? 5189)

@@ -27,7 +27,8 @@ export function filesTool(workspace: string): Promise<FilesTool> {
 
 async function connect(workspace: string): Promise<FilesTool> {
   const require = createRequire(import.meta.url)
-  const server = require.resolve('@modelcontextprotocol/server-filesystem/dist/index.js')
+  // The packaged app ships the file server as one bundled file and says where it is.
+  const server = process.env.OPENWOVE_FILES_SERVER ?? require.resolve('@modelcontextprotocol/server-filesystem/dist/index.js')
   const transport = new StdioClientTransport({ command: process.execPath, args: [server, workspace], cwd: workspace })
   const client = new Client({ name: 'openwove-runner', version: '0.1.0' })
   await client.connect(transport)

@@ -1,7 +1,7 @@
 /** The local runner: `npm run runner`. The app reaches it through Vite's /api proxy. */
-import { existsSync, mkdirSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readFileSync, statSync } from 'node:fs'
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
-import { join } from 'node:path'
+import { extname, join, normalize } from 'node:path'
 import Anthropic from '@anthropic-ai/sdk'
 import { RUNNABLE_TOOLS } from '../src/lib/catalog'
 import { parseFlow } from '../src/lib/flow-file'
@@ -12,8 +12,35 @@ import { API_TRIES, Run } from './run'
 import { loadRuns, saveRun } from './run-store'
 import { claudeStatus } from './status'
 
+// First launch of the app: put the sample flows and their inputs in the person's own folder.
+const SEED_DIR = process.env.OPENWOVE_SEED
+if (SEED_DIR && !existsSync(join(ROOT, 'flows'))) cpSync(SEED_DIR, ROOT, { recursive: true })
+
 if (existsSync(join(ROOT, '.env.local'))) process.loadEnvFile(join(ROOT, '.env.local'))
 mkdirSync(WORKSPACE, { recursive: true })
+
+/** Set by the packaged app: the built UI, which the runner serves itself since there's no Vite proxy. */
+const STATIC_DIR = process.env.OPENWOVE_STATIC
+const CONTENT_TYPES: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript',
+  '.css': 'text/css',
+  '.svg': 'image/svg+xml',
+  '.json': 'application/json',
+  '.woff2': 'font/woff2',
+  '.png': 'image/png',
+}
+
+const API_ROUTES = new Set(['health', 'status', 'flows', 'runs', 'app-events'])
+
+/** A file from the built UI, or index.html for any page the app routes itself. */
+function serveStatic(res: ServerResponse, pathname: string) {
+  const wanted = normalize(join(STATIC_DIR!, pathname))
+  const isFile = wanted.startsWith(STATIC_DIR!) && existsSync(wanted) && statSync(wanted).isFile()
+  const file = isFile ? wanted : join(STATIC_DIR!, 'index.html')
+  res.writeHead(200, { 'Content-Type': CONTENT_TYPES[extname(file)] ?? 'application/octet-stream' })
+  res.end(readFileSync(file))
+}
 
 const hasAnthropic = Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN)
 const client = hasAnthropic ? new Anthropic({ maxRetries: API_TRIES - 1 }) : null
@@ -74,6 +101,12 @@ async function readJson(req: IncomingMessage): Promise<unknown> {
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', `http://localhost:${PORT}`)
+  if (STATIC_DIR) {
+    // The app calls /api/...; Vite strips the prefix in development, so do the same here.
+    // The MCP server calls the routes directly, without it.
+    if (url.pathname.startsWith('/api/')) url.pathname = url.pathname.slice('/api'.length)
+    else if (!API_ROUTES.has(url.pathname.split('/')[1])) return serveStatic(res, url.pathname)
+  }
   const parts = url.pathname.split('/').filter(Boolean)
 
   try {

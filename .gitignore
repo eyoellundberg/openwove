@@ -33,3 +33,9 @@ workspace/northwind/*
 .env.local
 # Runs saved by the local runner
 runs/
+
+# Desktop app (built by npm run desktop:build)
+src-tauri/target
+src-tauri/gen
+src-tauri/binaries
+src-tauri/resources

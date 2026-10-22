@@ -1,22 +1,8 @@
-/** What a saved run adds up to. Pure, so the runner and the app read runs the same way. */
-import { findAgent } from './catalog'
-import type { RunnerEvent } from './engine'
-import type { FlowFile } from './flow-file'
-import { costOf, modelInfo } from './models'
+/** What a saved run adds up to, for the Usage page. Pure, so the runner and the app read runs the same way. */
+import { modelInfo } from './models'
+import { buildReport, type RunStatus, type StoredRun } from './run-report'
 
-/** A run as saved on this computer: the flow it ran and everything that happened. */
-export interface StoredRun {
-  id: string
-  startedAt: number
-  /** Null while the run is still going. */
-  endedAt: number | null
-  /** The runner stopped before the run finished (it was restarted or closed). */
-  interrupted?: boolean
-  flow: FlowFile
-  events: RunnerEvent[]
-}
-
-export type RunStatus = 'running' | 'done' | 'failed' | 'stopped' | 'interrupted'
+export type { RunStatus, StoredRun } from './run-report'
 
 export interface StepUsage {
   stepId: string
@@ -41,47 +27,28 @@ export interface RunSummary {
   steps: StepUsage[]
 }
 
-function statusOf(run: StoredRun): RunStatus {
-  if (run.interrupted) return 'interrupted'
-  if (run.endedAt == null) return 'running'
-  if (run.events.some((e) => e.type === 'step_failed')) return 'failed'
-  if (run.events.some((e) => e.type === 'step_denied' || e.type === 'step_stopped')) return 'stopped'
-  return 'done'
-}
-
+/** The Usage page's view of a run: the report's numbers, without the per-step detail. */
 export function summarize(run: StoredRun): RunSummary {
-  const tokens = new Map<string, { inputTokens: number; outputTokens: number }>()
-  for (const e of run.events) {
-    if (e.type !== 'step_usage') continue
-    const t = tokens.get(e.stepId) ?? { inputTokens: 0, outputTokens: 0 }
-    t.inputTokens += e.inputTokens
-    t.outputTokens += e.outputTokens
-    tokens.set(e.stepId, t)
-  }
-  const steps = run.flow.steps.map((step): StepUsage => {
-    const agent = findAgent(run.flow.agents, step.agent)
-    const model = agent.model
-    const { inputTokens, outputTokens } = tokens.get(step.id) ?? { inputTokens: 0, outputTokens: 0 }
-    return {
-      stepId: step.id,
-      task: step.task,
-      agent: agent.name,
-      model,
-      inputTokens,
-      outputTokens,
-      cost: costOf(model, inputTokens, outputTokens),
-      estimated: !modelInfo(model).listPrice,
-    }
-  })
+  const report = buildReport(run)
   return {
     id: run.id,
     flowName: run.flow.name,
     startedAt: run.startedAt,
     endedAt: run.endedAt,
-    status: statusOf(run),
-    cost: steps.reduce((sum, s) => sum + s.cost, 0),
-    estimated: steps.some((s) => s.estimated && s.inputTokens + s.outputTokens > 0),
-    steps,
+    // A step waiting for the person is still a run that's going.
+    status: report.status === 'waiting' ? 'running' : report.status,
+    cost: report.cost.usd,
+    estimated: report.cost.estimated,
+    steps: report.steps.map((s) => ({
+      stepId: s.id,
+      task: s.task,
+      agent: s.agent,
+      model: s.model,
+      inputTokens: s.usage.inputTokens,
+      outputTokens: s.usage.outputTokens,
+      cost: s.usage.usd,
+      estimated: s.usage.estimated,
+    })),
   }
 }
 

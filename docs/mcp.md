@@ -43,14 +43,14 @@ From source, **Connect your agent** shows both with your folder's real path fill
 | `check_flow` | Tool, read-only | Runs every check `save_flow` would, without saving or showing anything. Takes `flow`. Answers `{ ok, problems, warnings }`. |
 | `save_flow` | Tool | Checks a flow and saves it to `flows/`, then opens it in the app. Takes `flow`, and optionally `file` (defaults to the flow's name; an existing file of that name is replaced) and `open` (defaults to true). Answers `{ saved, file, app, problems, warnings }`. If the flow has a problem, nothing is saved and `problems` is the list to fix. |
 | `open_flow` | Tool | Opens a saved flow in the app. Takes `file`. |
-| `list_runs` | Tool, read-only | Runs the person has made, newest first: `{ runs: [{ runId, flow, status, startedAt, costUsd }] }`. Takes `limit`. |
+| `list_runs` | Tool, read-only | Runs the person has made, newest first: `{ runs: [{ runId, flow, status, startedAt, costUsd }] }`. `status` is the same set as the report's. Takes `limit`. |
 | `get_run` | Tool, read-only | A run as structured data, following the `run-report` schema: each step's status, what the agent said it did, the files it touched, what it asked you, what went wrong, and what it cost. Takes `runId`. Works while the run is going. |
 
 Every tool except `get_guide` and `open_flow` declares an output schema and returns `structuredContent`, so an agent can parse the answer instead of reading prose. The same JSON is also in the text content for agents that only read text.
 
 ## Schemas
 
-[`schemas/flow.schema.json`](../schemas/flow.schema.json) and [`schemas/run-report.schema.json`](../schemas/run-report.schema.json) are generated from the zod schemas in `src/lib` (`npm run schemas`; CI fails if they're stale). JSON Schema can't say everything: step and agent ids must be unique, steps must name an existing agent, and stages must count up from 0 without gaps. `check_flow` and `save_flow` enforce those too, so use them as the last word. The runner serves the same schemas at `GET /schemas/flow` and `GET /schemas/run-report`.
+[`schemas/flow.schema.json`](../schemas/flow.schema.json) and [`schemas/run-report.schema.json`](../schemas/run-report.schema.json) are generated from the zod schemas in `src/lib` (`npm run schemas`; CI fails if they're stale). Each has an `$id` pointing at its copy on GitHub, so a flow file or an editor can refer to it by address. JSON Schema can't say everything: step and agent ids must be unique, steps must name an existing agent, and stages must count up from 0 without gaps. `check_flow` and `save_flow` enforce those too, so use them as the last word. The runner serves the same schemas at `GET /schemas/flow` and `GET /schemas/run-report`.
 
 The guide is [`skills/openwove-builder/SKILL.md`](../skills/openwove-builder/SKILL.md) plus a short section on using these tools instead of the file and checker, and the absolute path of your `workspace/`. So an agent gets the same rules over MCP as from the file.
 

@@ -1,20 +1,25 @@
 {
-  "title": "OpenWove run report",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/eyoellundberg/openwove/main/schemas/run-report.schema.json",
+  "title": "OpenWove run report",
+  "description": "What one run of a flow came to: its status and cost, what is waiting for the person, and per step what the agent did, asked, touched and spent.",
   "type": "object",
   "properties": {
     "version": {
       "type": "number",
-      "const": 1
+      "const": 1,
+      "description": "The report format version. Always 1."
     },
     "runId": {
-      "type": "string"
+      "type": "string",
+      "description": "The id list_runs and the runner use for this run."
     },
     "flow": {
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "The flow’s name."
         },
         "request": {
           "type": "string",
@@ -31,11 +36,11 @@
       "type": "string",
       "enum": [
         "running",
-        "waiting",
         "done",
         "failed",
         "stopped",
-        "interrupted"
+        "interrupted",
+        "waiting"
       ],
       "description": "\"waiting\": a step is waiting for the person. \"interrupted\": OpenWove closed before it finished."
     },
@@ -54,13 +59,13 @@
       "anyOf": [
         {
           "type": "integer",
-          "minimum": 0,
-          "maximum": 9007199254740991
+          "minimum": 0
         },
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "How long it took, or null while it is still going."
     },
     "cost": {
       "type": "object",
@@ -68,13 +73,11 @@
         "inputTokens": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 9007199254740991,
           "description": "Tokens sent to the model, cached ones included."
         },
         "outputTokens": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 9007199254740991,
           "description": "Tokens the model wrote."
         },
         "usd": {
@@ -93,7 +96,8 @@
         "usd",
         "estimated"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description": "Every step’s usage added up."
     },
     "waitingForPerson": {
       "type": "array",
@@ -147,7 +151,7 @@
           "stage": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 9007199254740991
+            "description": "Steps in the same stage ran at the same time."
           },
           "status": {
             "type": "string",
@@ -156,18 +160,17 @@
               "running",
               "waiting",
               "done",
-              "failed",
               "denied",
-              "skipped",
-              "stopped"
+              "failed",
+              "stopped",
+              "skipped"
             ],
             "description": "\"denied\" means the person said no when it asked. \"skipped\" means the person chose to skip it after a problem, or it never started because an earlier step stopped the run."
           },
           "attempts": {
             "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991,
-            "description": "How many times it ran into a problem and was tried again, plus one."
+            "minimum": 1,
+            "description": "How many times it was tried: 1 unless it ran into a problem and the person chose to retry."
           },
           "approval": {
             "type": "object",
@@ -220,13 +223,16 @@
               "type": "object",
               "properties": {
                 "tool": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "The tool call, e.g. \"write_file\"."
                 },
                 "path": {
+                  "description": "The file it touched, inside the workspace folder.",
                   "type": "string"
                 },
                 "ok": {
-                  "type": "boolean"
+                  "type": "boolean",
+                  "description": "False if the tool reported an error."
                 }
               },
               "required": [
@@ -235,7 +241,7 @@
               ],
               "additionalProperties": false
             },
-            "description": "Every tool call it made, in order. For the files tool, `path` is what it touched, inside the workspace folder."
+            "description": "Every tool call it made, in order."
           },
           "error": {
             "description": "Why it failed or had a problem, or null.",
@@ -250,13 +256,11 @@
               "inputTokens": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 9007199254740991,
                 "description": "Tokens sent to the model, cached ones included."
               },
               "outputTokens": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 9007199254740991,
                 "description": "Tokens the model wrote."
               },
               "usd": {

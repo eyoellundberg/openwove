@@ -1,6 +1,8 @@
 {
-  "title": "OpenWove flow file",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/eyoellundberg/openwove/main/schemas/flow.schema.json",
+  "title": "OpenWove flow file",
+  "description": "A multi-agent flow: who does what, in which order, and which steps ask the person first. Saved as flows/<name>.json and opened on the OpenWove canvas.",
   "type": "object",
   "properties": {
     "$schema": {
@@ -9,7 +11,8 @@
     },
     "version": {
       "type": "number",
-      "const": 1
+      "const": 1,
+      "description": "The format version. Always 1."
     },
     "name": {
       "type": "string",
@@ -78,7 +81,8 @@
           "model"
         ],
         "additionalProperties": false
-      }
+      },
+      "description": "Who does the work. Name them by their job and reuse one across steps."
     },
     "steps": {
       "minItems": 1,
@@ -109,7 +113,6 @@
           "stage": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 9007199254740991,
             "description": "Steps in the same stage run at the same time. Stage 1 starts when all of stage 0 is done. Count up from 0 without gaps."
           },
           "tools": {
@@ -144,7 +147,8 @@
           "stage"
         ],
         "additionalProperties": false
-      }
+      },
+      "description": "What gets done. Steps in the same stage run at the same time."
     }
   },
   "required": [

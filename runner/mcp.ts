@@ -9,7 +9,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 import { FlowFileSchema, parseFlow } from '../src/lib/flow-file'
-import { buildReport, RunReportSchema } from '../src/lib/run-report'
+import { buildReport, REPORT_STATUSES, RunReportSchema } from '../src/lib/run-report'
 import { SCHEMA_NAMES, schemaJson } from '../src/lib/schemas'
 import { flowWarnings, listFlows, readFlow, RUNNER_PORT, saveFlow, WORKSPACE } from './flows'
 import { readRuns } from './run-store'
@@ -126,7 +126,7 @@ server.registerTool(
     title: 'Read a flow',
     description: 'A flow file as it is now, including any changes the person made on the canvas. Check it against the "flow" schema.',
     inputSchema: { file: z.string().describe('The file name from list_flows, e.g. "landing-page.json".') },
-    outputSchema: { file: z.string(), flow: z.looseObject({}) },
+    outputSchema: { file: z.string(), flow: z.looseObject({}).describe('The file as it is. It follows the "flow" schema unless the person broke it by hand.') },
     annotations: readOnly,
   },
   ({ file }) => {
@@ -203,11 +203,11 @@ server.registerTool(
     outputSchema: {
       runs: z.array(
         z.object({
-          runId: z.string(),
-          flow: z.string(),
-          status: z.string(),
+          runId: z.string().describe('Pass it to get_run.'),
+          flow: z.string().describe('The flow’s name.'),
+          status: z.enum(REPORT_STATUSES).describe('"waiting": a step is waiting for the person.'),
           startedAt: z.string().describe('ISO 8601 time.'),
-          costUsd: z.number(),
+          costUsd: z.number().describe('What it has cost so far, in US dollars.'),
         }),
       ),
     },

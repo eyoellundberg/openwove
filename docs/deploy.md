@@ -4,7 +4,7 @@ The site in `site/` is a static build (`npm run site:build` → `dist-site/`), h
 
 ## Deploying
 
-- **Automatically.** [`.github/workflows/deploy-site.yml`](../.github/workflows/deploy-site.yml) deploys on every push to `main` that changes the site, the app code it imports, `public/` or `wrangler.toml`. It needs two repository secrets (Settings › Secrets and variables › Actions): `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`. Without the token it warns and stops instead of failing.
+- **Automatically.** [`.github/workflows/deploy-site.yml`](../.github/workflows/deploy-site.yml) deploys on every push to `main` that changes the site, the app code it imports, `public/` or `wrangler.toml`. It needs two repository secrets (Settings › Secrets and variables › Actions): `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`. Without the token it still builds the site, then warns instead of deploying, so the run stays green.
 - **By hand.** `npm run site:deploy` (needs `npx wrangler login` once).
 
 To make the token: Cloudflare dashboard › My Profile › API Tokens › Create Token › the **Edit Cloudflare Workers** template is more than needed; a custom token with **Account › Cloudflare Pages › Edit** is enough. Add it as the `CLOUDFLARE_API_TOKEN` secret.
@@ -33,7 +33,7 @@ The build copies `og.png` into the site (`vite.site.config.ts`), and `site/index
 
 ## Releasing the Mac app
 
-1. Bump the version in `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and `package.json`.
+1. Bump the version in `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and `package.json` (`npm version X.Y.Z --no-git-tag-version` does the last one and the lockfile), and `VERSION` in `site/src/facts.ts`.
 2. `npm run desktop:build` (see [development.md](development.md#the-desktop-app)). The `.dmg` is in `src-tauri/target/release/bundle/dmg/`.
 3. Check it: mount it, `codesign --verify --deep --strict` the app, and launch the copy. Then publish it with `gh release create vX.Y.Z`, uploading the `.dmg` renamed to **`OpenWove-arm64.dmg`** (the site's link relies on that name staying the same) and its `.sha256`.
 

@@ -176,11 +176,8 @@ export function tick(sim: Sim, dt: number, windowMinutes: number, random: () => 
   // Move simulated work forward, pausing at the approval point.
   for (const t of tasks) {
     if (t.state !== 'running') continue
-    if (t.live) {
-      t.worked += dt
-      continue
-    }
     t.worked += dt
+    if (t.live) continue
     t.inputTokens += dt * SIM_INPUT_TOKENS_PER_MINUTE
     t.outputTokens += dt * SIM_OUTPUT_TOKENS_PER_MINUTE
     if (t.approval !== 'never' && !t.gatePassed && t.worked >= t.minutes * GATE_AT) {

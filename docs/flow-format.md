@@ -1,6 +1,6 @@
 # Flow file format
 
-A flow is one JSON file in `flows/`. Your agent writes it, the canvas opens it, and the runner runs it. The source of truth is the zod schema in [`src/lib/flow-file.ts`](../src/lib/flow-file.ts); its field descriptions are also what agents see over MCP. This page explains it for people. The same format as a JSON Schema is in [`schemas/flow.schema.json`](../schemas/flow.schema.json), generated from it with `npm run schemas`; a flow may start with `"$schema": "../schemas/flow.schema.json"` so editors check it as you type.
+A flow is one JSON file in `flows/`. Your agent writes it, the canvas opens it, and the runner runs it. The source of truth is the zod schema in [`src/lib/flow-file.ts`](../src/lib/flow-file.ts); its field descriptions are also what agents see over MCP. This page explains it for people. The same format as a JSON Schema is in [`schemas/flow.schema.json`](../schemas/flow.schema.json), generated from it with `npm run schemas`. A flow may start with `"$schema": "../schemas/flow.schema.json"` (or the schema's `$id`, its address on GitHub) so editors check it as you type.
 
 ## Example
 
@@ -40,6 +40,7 @@ The full version is [`flows/landing-page.json`](../flows/landing-page.json).
 
 | Field | Type | Required | Meaning |
 |---|---|---|---|
+| `$schema` | string | No | Where the JSON Schema is, for editors. Ignored otherwise. |
 | `version` | `1` | Yes | The format version. Always `1` for now. |
 | `name` | string, not empty | Yes | What you'll recognize the flow by. Shown in the sidebar and on the canvas. |
 | `request` | string | No | What the person asked for, in their words. Defaults to `""`. |

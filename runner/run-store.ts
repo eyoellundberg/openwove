@@ -50,23 +50,10 @@ export function readRuns(): StoredRun[] {
 
 /** The runner's own start-up read: also closes out runs that were going when it stopped. */
 export function loadRuns(): StoredRun[] {
-  if (!existsSync(RUNS_DIR)) return []
-  const runs: StoredRun[] = []
-  for (const file of readdirSync(RUNS_DIR).filter((f) => f.endsWith('.json'))) {
-    try {
-      const path = join(RUNS_DIR, file)
-      const run = JSON.parse(readFileSync(path, 'utf8')) as StoredRun
-      if (typeof run.id !== 'string' || !Array.isArray(run.events) || !parseFlow(run.flow).ok) continue
-      if (run.endedAt == null) {
-        const closed = closeOut(run, statSync(path).mtimeMs)
-        saveRun(closed)
-        runs.push(closed)
-      } else {
-        runs.push(run)
-      }
-    } catch {
-      // A file that isn't a run (or is damaged) is left alone and skipped.
-    }
-  }
-  return runs
+  return readRuns().map((run) => {
+    if (run.endedAt != null) return run
+    const closed = closeOut(run, statSync(join(RUNS_DIR, `${run.id}.json`)).mtimeMs)
+    saveRun(closed)
+    return closed
+  })
 }

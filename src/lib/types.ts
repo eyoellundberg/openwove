@@ -32,15 +32,9 @@ export interface Step {
   log?: string[]
 }
 
-export type TaskState =
-  | 'pending'
-  | 'running'
-  | 'waiting'
-  | 'done'
-  | 'denied'
-  | 'failed'
-  | 'stopped'
-  | 'skipped'
+/** Every state a step can be in, on the timeline and in a run report. */
+export const TASK_STATES = ['pending', 'running', 'waiting', 'done', 'denied', 'failed', 'stopped', 'skipped'] as const
+export type TaskState = (typeof TASK_STATES)[number]
 
 /** One step (or one background job) actually running on the timeline. */
 export interface Task {

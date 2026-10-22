@@ -50,7 +50,7 @@ OpenWove comes with an MCP server, so your agent can save a flow and open it in 
 
 Then ask for multi-agent work, for example *"Set up a flow that turns workspace/brief.md into a landing page and a launch email."* The flow opens on the canvas. Tweak it, press **Save changes**, and your agent reads your version next time. The MCP server never runs flows and never sees your key. See [docs/mcp.md](docs/mcp.md).
 
-Without MCP, an agent can follow [`skills/openwove-builder/SKILL.md`](skills/openwove-builder/SKILL.md), write `flows/<name>.json` itself, and check it with `npm run check-flow`.
+Without MCP, an agent can follow [`skills/openwove-builder/SKILL.md`](skills/openwove-builder/SKILL.md), write `flows/<name>.json` itself, and check it with `npm run check-flow`. The format is also published as a JSON Schema, [`schemas/flow.schema.json`](schemas/flow.schema.json), and a run's outcome as [`schemas/run-report.schema.json`](schemas/run-report.schema.json).
 
 ## What works today
 
@@ -77,8 +77,10 @@ Without MCP, an agent can follow [`skills/openwove-builder/SKILL.md`](skills/ope
 | `npm run runner` | The local runner on port 5189. The app reaches it through Vite's `/api` proxy. |
 | `npm run mcp` | The MCP server your agent starts (stdio). |
 | `npm run check-flow flows/<file>.json` | Check a flow file and list every problem. |
-| `npm run site` | The website in `site/`. `npm run site:build` builds it into `dist-site/`. |
-| `npx tsc -b && npm run lint && npm run build && npm run site:build` | What CI checks, before you commit. CI also runs `check-flow` on every sample flow. |
+| `npm run schemas` | Rewrite `schemas/*.json` from the zod schemas. Run it after changing the flow format or the run report. |
+| `npm run site` | The website in `site/`. `npm run site:build` builds it into `dist-site/`; `npm run site:deploy` publishes it. |
+| `npm run desktop:build` | The Mac app (needs Rust). See [docs/deploy.md](docs/deploy.md) for releasing it. |
+| `npx tsc -b && npm run lint && npm run build && npm run site:build` | What CI checks, before you commit. CI also checks every sample flow and that `schemas/` is current. |
 
 ## Documentation
 

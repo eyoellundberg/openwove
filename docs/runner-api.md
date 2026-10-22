@@ -17,6 +17,12 @@ Bodies are JSON. Errors come back as `{ "error": "A sentence you can show the pe
 | `PUT /keys/:provider`, `DELETE /keys/:provider` | Add or remove a key (`anthropic`, `openai`, `google`), body `{ key }`. Keys go in and never come out; `/health` only says whether one exists. In the Mac app they're kept in the Keychain (service `OpenWove`); run from source, in `.env.local`. |
 | `GET /status` | `{ anthropic: { level, text, incident?, checkedAt } }`, from Anthropic's public status page. `level` is `ok`, `slow`, `down` or `unknown`. Cached for 30 seconds. |
 
+## Schemas
+
+| Method and path | Returns |
+|---|---|
+| `GET /schemas/:name` | A JSON Schema, `flow` or `run-report`, the same as the files in [`schemas/`](../schemas/). 404 with the known names otherwise. |
+
 ## Flows
 
 | Method and path | Does |
@@ -39,7 +45,6 @@ Bodies are JSON. Errors come back as `{ "error": "A sentence you can show the pe
 | `POST /runs` | `{ flow, streaks? }` starts a real run. `streaks` maps step ids to approvals in a row. Returns `{ runId }`. 400 if there's no API key or the flow isn't valid. |
 | `GET /runs` | Every run on this computer, newest first, with status, cost and per-step usage. This is what the **Usage** page shows. |
 | `GET /runs/:id/report` | The run as structured data, following [`schemas/run-report.schema.json`](../schemas/run-report.schema.json): status, cost, what's waiting for you, and per step what it did, asked, touched and cost. Works while it's going and after. |
-| `GET /schemas/:name` | A JSON Schema: `flow` or `run-report`. |
 | `GET /runs/:id/events` | The run's event stream. See below. |
 | `POST /runs/:id/decide` | `{ stepId, approve }` answers a step that's waiting for you. 409 if it isn't waiting anymore. |
 | `POST /runs/:id/resolve` | `{ stepId, action }` answers a step that ran into trouble. `action` is `retry`, `skip` or `stop`; anything else is a 400. 409 if it isn't waiting anymore. |
@@ -76,3 +81,5 @@ The event type lives in [`src/lib/engine.ts`](../src/lib/engine.ts) (`RunnerEven
 ## Saved runs
 
 Every run is written to `runs/<id>.json` as it goes (a burst of events costs one write), as `{ id, startedAt, endedAt, interrupted?, flow, events }`. A run that was going when the runner stopped is closed out as interrupted the next time it starts. `runs/` is ignored by git.
+
+Everything derived from a run comes from one place: `buildReport` in [`src/lib/run-report.ts`](../src/lib/run-report.ts) turns the events into the report, and the Usage page's `summarize` is a cut of that report. If you add an event, handle it there and it shows up in both.

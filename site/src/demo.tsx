@@ -236,7 +236,7 @@ export function InteractiveApp() {
                           </span>
                         </div>
                       </div>
-                      <div className="relative h-10 flex-1 rounded-lg border bg-muted/40">
+                      <div className="relative h-10 flex-1 rounded-lg border bg-muted/50">
                         {begun && (
                           <span
                             key={`${lane.who}-${run}`}

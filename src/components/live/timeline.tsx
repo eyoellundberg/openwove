@@ -101,10 +101,10 @@ export function Timeline({ onFlag }: { onFlag: (taskId: string) => void }) {
 
           <div className="relative">
             {TIMELINE_TICKS[mode].map((m) => (
-              <div key={m} className="absolute inset-y-0 w-px bg-lane" style={{ left: `${tickX(m)}%` }} />
+              <div key={m} className="absolute inset-y-0 w-px bg-muted" style={{ left: `${tickX(m)}%` }} />
             ))}
             {lanes.map((id) => (
-              <div key={id} className="relative h-16 border-t border-lane">
+              <div key={id} className="relative h-16 border-t border-muted">
                 <div className="absolute inset-0" style={track}>
                   {visible
                     .filter((t) => t.agent === id)

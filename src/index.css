@@ -139,7 +139,6 @@
   --color-earned-subtle: var(--earned-subtle);
   --color-failed: var(--failed);
   --color-failed-subtle: var(--failed-subtle);
-  --color-lane: var(--lane);
   --color-vendor-anthropic: var(--vendor-anthropic);
   --color-vendor-openai: var(--vendor-openai);
   --color-vendor-google: var(--vendor-google);
@@ -174,7 +173,6 @@
   --earned-subtle: oklch(0.96 0.03 160);
   --failed: oklch(0.56 0.2 25);
   --failed-subtle: oklch(0.96 0.025 20);
-  --lane: oklch(0.96 0 0);
   --vendor-anthropic: oklch(0.66 0.13 45);
   --vendor-openai: var(--foreground);
   --vendor-google: oklch(0.6 0.17 262);
@@ -192,7 +190,6 @@
   --earned-subtle: oklch(0.29 0.05 160);
   --failed: oklch(0.72 0.15 22);
   --failed-subtle: oklch(0.29 0.06 22);
-  --lane: oklch(0.24 0 0);
   --vendor-anthropic: oklch(0.72 0.13 45);
   --vendor-google: oklch(0.72 0.14 262);
 }

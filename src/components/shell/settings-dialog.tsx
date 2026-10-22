@@ -198,7 +198,7 @@ export function SettingsDialog() {
       <DialogContent className="max-h-svh gap-0 overflow-hidden p-0 sm:h-120 sm:max-w-3xl">
         <DialogDescription className="sr-only">Settings are kept on this computer.</DialogDescription>
         <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
-          <nav aria-label="Settings sections" className="flex shrink-0 flex-col gap-1 border-b bg-muted/40 p-3 sm:w-52 sm:border-r sm:border-b-0">
+          <nav aria-label="Settings sections" className="flex shrink-0 flex-col gap-1 border-b bg-muted/50 p-3 sm:w-52 sm:border-r sm:border-b-0">
             <DialogTitle className="px-2 py-2 text-xs font-medium tracking-widest text-muted-foreground uppercase">Settings</DialogTitle>
             <div className="flex gap-1 sm:flex-col">
               {SECTIONS.map(({ id, name, icon: Icon }) => (

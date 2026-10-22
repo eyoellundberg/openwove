@@ -3,10 +3,10 @@ import { useAgent } from '@/lib/store'
 import type { Provider } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
-const MARK: Record<Provider, { glyph: string; className: string }> = {
-  anthropic: { glyph: '✳', className: 'text-vendor-anthropic' },
-  openai: { glyph: '◎', className: 'text-vendor-openai' },
-  google: { glyph: '✦', className: 'text-vendor-google' },
+const MARK: Record<Provider, { glyph: string }> = {
+  anthropic: { glyph: '✳' },
+  openai: { glyph: '◎' },
+  google: { glyph: '✦' },
 }
 
 const avatarVariants = cva('grid shrink-0 place-items-center rounded-lg border bg-card select-none', {
@@ -26,7 +26,7 @@ export function AgentAvatar({
 }: { agent: string; className?: string } & VariantProps<typeof avatarVariants>) {
   const mark = MARK[useAgent(agent).provider]
   return (
-    <span aria-hidden className={cn(avatarVariants({ size }), mark.className, className)}>
+    <span aria-hidden className={cn(avatarVariants({ size }), className)}>
       {mark.glyph}
     </span>
   )

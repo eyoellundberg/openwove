@@ -3,25 +3,24 @@ import type { Agent, Approval } from './types'
 interface ToolInfo {
   letter: string
   name: string
-  className: string
 }
 
-/** Known tools get their own tile; any other tool id from a flow file gets a neutral one. Tailwind palette colors read in both themes. */
+/** Known tools get a letter tile; any other tool id from a flow file gets its first letter. Tiles are all neutral, so color stays for status. */
 const TOOLS: Record<string, ToolInfo> = {
-  files: { letter: 'Fs', name: 'Files', className: 'bg-emerald-600' },
-  google: { letter: 'G', name: 'Google', className: 'bg-blue-500' },
-  notion: { letter: 'N', name: 'Notion', className: 'bg-neutral-600' },
-  figma: { letter: 'F', name: 'Figma', className: 'bg-orange-600' },
-  slack: { letter: 'S', name: 'Slack', className: 'bg-purple-600' },
-  github: { letter: 'GH', name: 'GitHub', className: 'bg-neutral-700' },
-  stripe: { letter: 'S', name: 'Stripe', className: 'bg-indigo-500' },
-  gmail: { letter: 'M', name: 'Gmail', className: 'bg-red-500' },
-  linear: { letter: 'L', name: 'Linear', className: 'bg-violet-500' },
-  hubspot: { letter: 'H', name: 'HubSpot', className: 'bg-orange-500' },
+  files: { letter: 'Fs', name: 'Files' },
+  google: { letter: 'G', name: 'Google' },
+  notion: { letter: 'N', name: 'Notion' },
+  figma: { letter: 'F', name: 'Figma' },
+  slack: { letter: 'S', name: 'Slack' },
+  github: { letter: 'GH', name: 'GitHub' },
+  stripe: { letter: 'S', name: 'Stripe' },
+  gmail: { letter: 'M', name: 'Gmail' },
+  linear: { letter: 'L', name: 'Linear' },
+  hubspot: { letter: 'H', name: 'HubSpot' },
 }
 
 export function toolInfo(id: string): ToolInfo {
-  return TOOLS[id] ?? { letter: id.slice(0, 1).toUpperCase(), name: id, className: 'bg-neutral-500' }
+  return TOOLS[id] ?? { letter: id.slice(0, 1).toUpperCase(), name: id }
 }
 
 /** Tools the local runner can actually connect today. */

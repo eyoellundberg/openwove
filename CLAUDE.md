@@ -10,6 +10,7 @@ A friendly place to see and tweak multi-agent flows. A person's own agent writes
 - `npm run schemas` — rewrite `schemas/*.json` from the zod schemas (`flow-file.ts`, `run-report.ts`). Run it whenever either changes; CI checks it.
 - `npm run mcp` — the MCP server a person's agent connects to (stdio; `.mcp.json` registers it for Claude Code here).
 - `npm run desktop:build` — the Mac app (`src-tauri/`, Tauri; needs Rust). See `docs/development.md`.
+- `npm run site:deploy` — publish the site to Cloudflare Pages (it also deploys from CI). Releasing the Mac app and using a domain are in `docs/deploy.md`.
 - `npm run site` / `npm run site:build` — the marketing site in `site/` (React, built with the app's theme and shadcn components through `@/`; output in `dist-site/`).
 - `npx tsc -b && npm run lint && npm run build && npm run site:build` — what CI checks (plus `check-flow` on every file in `flows/`); run it before committing.
 

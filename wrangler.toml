@@ -1,0 +1,4 @@
+# The website on Cloudflare Pages. See docs/deploy.md.
+name = "openwove"
+pages_build_output_dir = "dist-site"
+compatibility_date = "2026-10-01"

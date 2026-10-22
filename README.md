@@ -103,7 +103,7 @@ Without MCP, an agent can follow [`skills/openwove-builder/SKILL.md`](skills/ope
 | `flows/` | Flow files. Four samples: Lumen landing page, a pricing page, and two for Northwind Coffee. |
 | `workspace/` | The only folder agents can read and write. Inputs for the samples are committed; outputs aren't. |
 | `site/` | The website, sharing the app's theme and components. |
-| `docs/` | The documentation above. |
+| `docs/` | The documentation above, including [deploying the site and releasing the app](docs/deploy.md). |
 
 ## Contributing and license
 

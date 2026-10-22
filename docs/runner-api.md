@@ -38,6 +38,8 @@ Bodies are JSON. Errors come back as `{ "error": "A sentence you can show the pe
 |---|---|
 | `POST /runs` | `{ flow, streaks? }` starts a real run. `streaks` maps step ids to approvals in a row. Returns `{ runId }`. 400 if there's no API key or the flow isn't valid. |
 | `GET /runs` | Every run on this computer, newest first, with status, cost and per-step usage. This is what the **Usage** page shows. |
+| `GET /runs/:id/report` | The run as structured data, following [`schemas/run-report.schema.json`](../schemas/run-report.schema.json): status, cost, what's waiting for you, and per step what it did, asked, touched and cost. Works while it's going and after. |
+| `GET /schemas/:name` | A JSON Schema: `flow` or `run-report`. |
 | `GET /runs/:id/events` | The run's event stream. See below. |
 | `POST /runs/:id/decide` | `{ stepId, approve }` answers a step that's waiting for you. 409 if it isn't waiting anymore. |
 | `POST /runs/:id/resolve` | `{ stepId, action }` answers a step that ran into trouble. `action` is `retry`, `skip` or `stop`; anything else is a 400. 409 if it isn't waiting anymore. |
@@ -56,6 +58,8 @@ Each event's `id` is its index in the run. On reconnect, the browser sends `Last
 | `step_started` | `stepId` | The step began. |
 | `step_log` | `stepId`, `text` | A line for the timeline, e.g. a file it read or wrote. |
 | `step_usage` | `stepId`, `inputTokens`, `outputTokens` | Tokens used by one API call. Add them up. |
+| `step_output` | `stepId`, `text` | What the agent said it did, in full. Shown in the report's `summary`. |
+| `step_action` | `stepId`, `tool`, `path?`, `ok` | One tool call, e.g. a file written. Shown in the report's `actions`. |
 | `step_waiting` | `stepId`, `gateText` | Waiting for your approval. `gateText` reads after the agent's name. |
 | `step_acted_alone` | `stepId` | Would have asked, but its earned trust let it go ahead. |
 | `step_resumed` | `stepId` | Going again after an approval or a retry. |

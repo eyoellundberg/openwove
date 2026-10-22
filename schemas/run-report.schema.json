@@ -1,0 +1,313 @@
+{
+  "title": "OpenWove run report",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "number",
+      "const": 1
+    },
+    "runId": {
+      "type": "string"
+    },
+    "flow": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "request": {
+          "type": "string",
+          "description": "What the person asked for, in their words."
+        }
+      },
+      "required": [
+        "name",
+        "request"
+      ],
+      "additionalProperties": false
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "running",
+        "waiting",
+        "done",
+        "failed",
+        "stopped",
+        "interrupted"
+      ],
+      "description": "\"waiting\": a step is waiting for the person. \"interrupted\": OpenWove closed before it finished."
+    },
+    "startedAt": {
+      "type": "string",
+      "description": "ISO 8601 time."
+    },
+    "endedAt": {
+      "description": "ISO 8601 time, or null while it is still going.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "durationMs": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "cost": {
+      "type": "object",
+      "properties": {
+        "inputTokens": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Tokens sent to the model, cached ones included."
+        },
+        "outputTokens": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Tokens the model wrote."
+        },
+        "usd": {
+          "type": "number",
+          "minimum": 0,
+          "description": "What this cost in US dollars."
+        },
+        "estimated": {
+          "type": "boolean",
+          "description": "True when the price is an example, not the provider’s list price."
+        }
+      },
+      "required": [
+        "inputTokens",
+        "outputTokens",
+        "usd",
+        "estimated"
+      ],
+      "additionalProperties": false
+    },
+    "waitingForPerson": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stepId": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "approval",
+              "problem"
+            ]
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "stepId",
+          "kind",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "description": "What is blocked on the person right now. Empty once the run has ended."
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The step’s id in the flow file."
+          },
+          "task": {
+            "type": "string",
+            "description": "The step’s short name."
+          },
+          "agent": {
+            "type": "string",
+            "description": "The agent’s name."
+          },
+          "model": {
+            "type": "string",
+            "description": "The model id the agent used."
+          },
+          "stage": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "running",
+              "waiting",
+              "done",
+              "failed",
+              "denied",
+              "skipped",
+              "stopped"
+            ],
+            "description": "\"denied\" means the person said no when it asked. \"skipped\" means the person chose to skip it after a problem, or it never started because an earlier step stopped the run."
+          },
+          "attempts": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "How many times it ran into a problem and was tried again, plus one."
+          },
+          "approval": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "never",
+                  "always",
+                  "earned"
+                ],
+                "description": "What the flow asked for."
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "not-needed",
+                  "approved",
+                  "denied",
+                  "acted-alone",
+                  "waiting"
+                ],
+                "description": "\"acted-alone\": it earned the right to skip asking. \"not-needed\": it never reached an acting step. \"waiting\": the person hasn’t answered yet."
+              },
+              "asked": {
+                "description": "What it asked, e.g. \"wants to publish the page\", or null if it didn’t ask.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "mode",
+              "outcome",
+              "asked"
+            ],
+            "additionalProperties": false
+          },
+          "summary": {
+            "description": "What the agent said it did, in its own words. Null until it finishes. Read this first.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tool": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "ok": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "tool",
+                "ok"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Every tool call it made, in order. For the files tool, `path` is what it touched, inside the workspace folder."
+          },
+          "error": {
+            "description": "Why it failed or had a problem, or null.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "usage": {
+            "type": "object",
+            "properties": {
+              "inputTokens": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Tokens sent to the model, cached ones included."
+              },
+              "outputTokens": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Tokens the model wrote."
+              },
+              "usd": {
+                "type": "number",
+                "minimum": 0,
+                "description": "What this cost in US dollars."
+              },
+              "estimated": {
+                "type": "boolean",
+                "description": "True when the price is an example, not the provider’s list price."
+              }
+            },
+            "required": [
+              "inputTokens",
+              "outputTokens",
+              "usd",
+              "estimated"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "task",
+          "agent",
+          "model",
+          "stage",
+          "status",
+          "attempts",
+          "approval",
+          "summary",
+          "actions",
+          "error",
+          "usage"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Every step in the flow, in stage order."
+    }
+  },
+  "required": [
+    "version",
+    "runId",
+    "flow",
+    "status",
+    "startedAt",
+    "endedAt",
+    "durationMs",
+    "cost",
+    "waitingForPerson",
+    "steps"
+  ],
+  "additionalProperties": false
+}

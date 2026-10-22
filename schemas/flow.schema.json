@@ -1,0 +1,157 @@
+{
+  "title": "OpenWove flow file",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "Optional. Where the JSON Schema for this file is, so editors can check it as you type.",
+      "type": "string"
+    },
+    "version": {
+      "type": "number",
+      "const": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "What the person will recognize the flow by."
+    },
+    "request": {
+      "default": "",
+      "description": "What the person asked for, in their words.",
+      "type": "string"
+    },
+    "agents": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "description": "Short id that steps use to refer to this agent, e.g. \"writer\"."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Named by its job, e.g. \"Writer\"."
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "anthropic",
+              "openai",
+              "google"
+            ],
+            "description": "Only \"anthropic\" runs for real today; others run in simulated mode."
+          },
+          "model": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The provider’s model id, e.g. \"claude-sonnet-5-5\"."
+          },
+          "effort": {
+            "default": "medium",
+            "description": "How hard the model thinks.",
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "tools": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "What this agent uses unless a step says otherwise. Tool ids, e.g. [\"files\"]. Only \"files\" (read and write in workspace/) is connected for real runs today."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "provider",
+          "model"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "steps": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "description": "Unique step id, e.g. \"draft-page\"."
+          },
+          "agent": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The id of the agent that does this step."
+          },
+          "task": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A short name for the card, e.g. \"Draft pricing page\"."
+          },
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What the agent is told to do, in plain language: what to make, from what, where to save it. Earlier steps’ results are passed along automatically."
+          },
+          "stage": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Steps in the same stage run at the same time. Stage 1 starts when all of stage 0 is done. Count up from 0 without gaps."
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Replaces the agent’s tools for this step. Tool ids, e.g. [\"files\"]. Only \"files\" (read and write in workspace/) is connected for real runs today."
+          },
+          "approval": {
+            "default": "never",
+            "description": "\"always\": ask the person before acting. \"earned\": ask until they’ve approved 3 times in a row, then ask less. \"never\": for steps that only read or write drafts.",
+            "type": "string",
+            "enum": [
+              "never",
+              "always",
+              "earned"
+            ]
+          },
+          "asks": {
+            "description": "How the request reads after the agent’s name, e.g. \"wants to publish the page\". Only for steps that ask.",
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "agent",
+          "task",
+          "prompt",
+          "stage"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "version",
+    "name",
+    "agents",
+    "steps"
+  ],
+  "additionalProperties": false
+}

@@ -53,6 +53,7 @@ export const FlowStepSchema = z.strictObject({
 
 export const FlowFileSchema = z
   .strictObject({
+    $schema: z.string().optional().describe('Optional. Where the JSON Schema for this file is, so editors can check it as you type.'),
     version: z.literal(1),
     name: z.string().min(1).describe('What the person will recognize the flow by.'),
     request: z.string().default('').describe('What the person asked for, in their words.'),

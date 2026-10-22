@@ -205,6 +205,7 @@ export class Run {
           .join('\n')
           .trim()
         this.outputs.push({ step, text: text || '(no summary)' })
+        this.emit({ type: 'step_output', stepId: step.id, text: text || '(no summary)' })
         const firstLine = text.split('\n').find((l) => l.trim())
         if (firstLine) this.emit({ type: 'step_log', stepId: step.id, text: firstLine.replace(/^#+\s*/, '').slice(0, 140) })
         this.emit({ type: 'step_done', stepId: step.id })
@@ -222,6 +223,8 @@ export class Run {
           }
         }
         const result = files ? await files.call(call.name, call.input) : { text: 'No tools are connected.', isError: true }
+        const path = (call.input as { path?: string })?.path
+        this.emit({ type: 'step_action', stepId: step.id, tool: call.name, ...(path ? { path } : {}), ok: !result.isError })
         this.emit({ type: 'step_log', stepId: step.id, text: logLine(call, result.isError) })
         results.push({ type: 'tool_result', tool_use_id: call.id, content: result.text, is_error: result.isError })
       }

@@ -1,6 +1,6 @@
 # Flow file format
 
-A flow is one JSON file in `flows/`. Your agent writes it, the canvas opens it, and the runner runs it. The source of truth is the zod schema in [`src/lib/flow-file.ts`](../src/lib/flow-file.ts); its field descriptions are also what agents see over MCP. This page explains it for people.
+A flow is one JSON file in `flows/`. Your agent writes it, the canvas opens it, and the runner runs it. The source of truth is the zod schema in [`src/lib/flow-file.ts`](../src/lib/flow-file.ts); its field descriptions are also what agents see over MCP. This page explains it for people. The same format as a JSON Schema is in [`schemas/flow.schema.json`](../schemas/flow.schema.json), generated from it with `npm run schemas`; a flow may start with `"$schema": "../schemas/flow.schema.json"` so editors check it as you type.
 
 ## Example
 

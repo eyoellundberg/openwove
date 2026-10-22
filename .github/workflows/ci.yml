@@ -32,6 +32,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Check the JSON Schemas are current
+        run: npm run -s schemas -- --check
+
       - name: Check sample flows
         run: for f in flows/*.json; do npm run -s check-flow "$f"; done
 

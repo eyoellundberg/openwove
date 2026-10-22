@@ -16,7 +16,8 @@
     "mcp": "tsx runner/mcp.ts",
     "site": "vite --config vite.site.config.ts",
     "site:build": "vite build --config vite.site.config.ts",
-    "desktop:build": "node scripts/build-desktop.mjs && tauri build"
+    "desktop:build": "node scripts/build-desktop.mjs && tauri build",
+    "schemas": "tsx scripts/schemas.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",

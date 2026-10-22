@@ -12,6 +12,8 @@ import { type RunSummary, summarize, type StoredRun } from '../src/lib/usage'
 import { API_TRIES, Run } from './run'
 import { loadRuns, saveRun } from './run-store'
 import { agentSetup, connectClaudeCode } from './agent'
+import { buildReport } from '../src/lib/run-report'
+import { SCHEMA_NAMES, schemaJson, type SchemaName } from '../src/lib/schemas'
 import { readProfile, profileContext, writeProfile } from './profile'
 import { getKey, PROVIDER_IDS, removeKey, setKey } from './secrets'
 import { claudeStatus } from './status'
@@ -35,7 +37,7 @@ const CONTENT_TYPES: Record<string, string> = {
   '.png': 'image/png',
 }
 
-const API_ROUTES = new Set(['health', 'status', 'flows', 'runs', 'app-events', 'profile', 'keys', 'agent'])
+const API_ROUTES = new Set(['health', 'status', 'flows', 'runs', 'app-events', 'profile', 'keys', 'agent', 'schemas'])
 
 /** A file from the built UI, or index.html for any page the app routes itself. */
 function serveStatic(res: ServerResponse, pathname: string) {
@@ -124,6 +126,12 @@ const server = createServer(async (req, res) => {
       return send(res, 200, health)
     }
 
+    // The JSON Schemas, for any agent that wants to check what it writes or reads.
+    if (req.method === 'GET' && parts[0] === 'schemas' && parts[1]) {
+      const name = parts[1].replace(/\.schema\.json$/, '') as SchemaName
+      return SCHEMA_NAMES.includes(name) ? send(res, 200, schemaJson(name)) : send(res, 404, { error: `Known schemas: ${SCHEMA_NAMES.join(', ')}.` })
+    }
+
     if (req.method === 'GET' && url.pathname === '/agent') return send(res, 200, agentSetup())
     if (req.method === 'POST' && url.pathname === '/agent/claude-code') {
       const problem = await connectClaudeCode()
@@ -195,6 +203,12 @@ const server = createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/runs') {
       const all = [...[...stored.values()].map(summaryOf), ...[...runs.values()].map((r) => summarize(r.toStored()))]
       return send(res, 200, all.sort((a, b) => b.startedAt - a.startedAt))
+    }
+
+    // A run, as structured data for reviewing it. Works while it's going and after.
+    if (req.method === 'GET' && parts[0] === 'runs' && parts[2] === 'report') {
+      const record = runs.get(parts[1])?.toStored() ?? stored.get(parts[1])
+      return record ? send(res, 200, buildReport(record)) : send(res, 404, { error: 'That run isn’t known to this runner.' })
     }
 
     const run = parts[0] === 'runs' ? runs.get(parts[1]) : undefined

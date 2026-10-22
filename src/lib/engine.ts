@@ -209,6 +209,10 @@ export type RunnerEvent =
   | { type: 'step_started'; stepId: string }
   | { type: 'step_log'; stepId: string; text: string }
   | { type: 'step_usage'; stepId: string; inputTokens: number; outputTokens: number }
+  /** What the agent said it did, in full: the first thing a reviewer reads. */
+  | { type: 'step_output'; stepId: string; text: string }
+  /** One tool call the agent made, e.g. a file it wrote. */
+  | { type: 'step_action'; stepId: string; tool: string; path?: string; ok: boolean }
   | { type: 'step_waiting'; stepId: string; gateText: string }
   | { type: 'step_problem'; stepId: string; error: string; attempt: number }
   | { type: 'step_stopped'; stepId: string }
@@ -233,6 +237,9 @@ export function applyRunnerEvent(sim: Sim, runId: string, e: RunnerEvent): Sim {
         return { ...t, state: 'running', start: sim.simT }
       case 'step_log':
         return { ...t, log: [...t.log, e.text] }
+      case 'step_output':
+      case 'step_action':
+        return t
       case 'step_usage':
         return { ...t, inputTokens: t.inputTokens + e.inputTokens, outputTokens: t.outputTokens + e.outputTokens }
       case 'step_waiting':

@@ -33,6 +33,22 @@ function closeOut(run: StoredRun, endedAt: number): StoredRun {
   return { ...run, events, endedAt, interrupted: true }
 }
 
+/** Every saved run, exactly as it is on disk. Changes nothing, so the MCP server can use it while the runner is going. */
+export function readRuns(): StoredRun[] {
+  if (!existsSync(RUNS_DIR)) return []
+  const runs: StoredRun[] = []
+  for (const file of readdirSync(RUNS_DIR).filter((f) => f.endsWith('.json'))) {
+    try {
+      const run = JSON.parse(readFileSync(join(RUNS_DIR, file), 'utf8')) as StoredRun
+      if (typeof run.id === 'string' && Array.isArray(run.events) && parseFlow(run.flow).ok) runs.push(run)
+    } catch {
+      // Not a run, or damaged: skip it.
+    }
+  }
+  return runs
+}
+
+/** The runner's own start-up read: also closes out runs that were going when it stopped. */
 export function loadRuns(): StoredRun[] {
   if (!existsSync(RUNS_DIR)) return []
   const runs: StoredRun[] = []

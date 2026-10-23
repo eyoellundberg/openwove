@@ -40,6 +40,8 @@ interface FlowStore extends engine.Sim {
   unsaved: boolean
   /** Your agent saved a flow while you were busy; it opens when you say so. */
   agentSaved: string | null
+  /** The made-up sample flow and history are showing, not the person's own work. */
+  demo: boolean
   /** Something went wrong loading a flow or talking to the runner. */
   notice: string | null
   paused: boolean
@@ -66,6 +68,8 @@ interface FlowStore extends engine.Sim {
   removeStep: (id: string) => void
   moveStep: (id: string, drop: engine.Drop) => void
   setView: (view: View) => void
+  /** Back to the made-up sample flow and history, so it can be played again. */
+  startDemo: () => void
   setMode: (mode: RunMode) => void
   checkRunner: () => Promise<void>
   saveProfile: (profile: Profile) => Promise<void>
@@ -173,6 +177,7 @@ export const useFlow = create<FlowStore>()((set, get) => {
     file: null,
     unsaved: false,
     agentSaved: null,
+    demo: true,
     notice: null,
     paused: false,
     dirty: false,
@@ -208,7 +213,7 @@ export const useFlow = create<FlowStore>()((set, get) => {
         if (previous) runner.stop(previous).catch(() => undefined)
         set({
           ...engine.startRun(engine.withoutDemoHistory(sim(get())), { live: true, runId }),
-          dirty: false, paused: false, notice: null,
+          dirty: false, paused: false, notice: null, demo: false,
         })
         writeSavedRun({ runId, file: s.file, flow })
         stopListening = follow(runId)
@@ -233,7 +238,7 @@ export const useFlow = create<FlowStore>()((set, get) => {
       const base = engine.withoutDemoHistory(get())
       set({
         ...engine.startRun({ ...base, steps: loaded.steps, agents: loaded.agents }, { live: true, runId: saved.runId }),
-        name: loaded.name, request: loaded.request, file: saved.file, unsaved: false, mode: 'real', view: 'live',
+        name: loaded.name, request: loaded.request, file: saved.file, unsaved: false, mode: 'real', view: 'live', demo: false,
       })
       stopListening = follow(saved.runId)
       get().checkRunner()
@@ -293,6 +298,19 @@ export const useFlow = create<FlowStore>()((set, get) => {
       writeStored('local', VIEW_KEY, view)
       set({ view })
     },
+    startDemo: () => {
+      stopListening?.()
+      stopListening = null
+      writeSavedRun(null)
+      writeStored('local', VIEW_KEY, 'live')
+      set({
+        ...engine.startRun({
+          simT: 0, tasks: initialHistory(), steps: sample.steps, agents: sample.agents, runs: [], runId: null, runRecorded: true,
+        }),
+        name: sample.name, request: sample.request, mode: 'simulated', file: null, unsaved: false, dirty: false,
+        paused: false, notice: null, promptStepId: null, demo: true, view: 'live',
+      })
+    },
     setMode: (mode) => {
       set({ mode, dirty: get().runId != null, notice: null })
       if (mode === 'real') get().checkRunner()
@@ -325,7 +343,7 @@ export const useFlow = create<FlowStore>()((set, get) => {
       stopListening = null
       set({
         ...loaded, tasks: engine.withoutDemoHistory(sim(get())).tasks,
-        file: null, unsaved: false, dirty: get().runId != null, notice: null, promptStepId: null,
+        file: null, unsaved: false, dirty: get().runId != null, notice: null, promptStepId: null, demo: false,
       })
       return true
     },

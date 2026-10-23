@@ -9,7 +9,7 @@ const STRANDS = [
 ]
 
 /** The first thing you see: the mark weaving itself together, then the name. */
-export function WeaveIntro({ onContinue }: { onContinue: () => void }) {
+export function WeaveIntro({ onContinue, onDemo }: { onContinue: () => void; onDemo: () => void }) {
   return (
     <div className="flex flex-col items-center gap-6 py-6 text-center">
       <svg viewBox="0 0 32 32" fill="none" role="img" aria-label="OpenWove" className="size-28">
@@ -33,6 +33,9 @@ export function WeaveIntro({ onContinue }: { onContinue: () => void }) {
       </div>
       <Button size="lg" className="weave-rise" style={{ animationDelay: '2.2s' }} onClick={onContinue}>
         Get started
+      </Button>
+      <Button variant="ghost" className="weave-rise -mt-3" style={{ animationDelay: '2.4s' }} onClick={onDemo}>
+        Show me a demo first
       </Button>
     </div>
   )

@@ -1,5 +1,5 @@
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Activity01Icon, ChartColumnIcon, Download01Icon, FileScriptIcon, FolderOpenIcon, PlugSocketIcon, Settings01Icon, WorkflowSquare01Icon } from '@hugeicons/core-free-icons'
+import { Activity01Icon, ChartColumnIcon, Download01Icon, FileScriptIcon, FolderOpenIcon, PlayCircleIcon, PlugSocketIcon, Settings01Icon, WorkflowSquare01Icon } from '@hugeicons/core-free-icons'
 import { useRef } from 'react'
 import { StatusDot } from '@/components/shared/status-dot'
 import {
@@ -30,6 +30,8 @@ function FlowsGroup() {
   const setView = useFlow((s) => s.setView)
   const openFlowFile = useFlow((s) => s.openFlowFile)
   const loadFlow = useFlow((s) => s.loadFlow)
+  const demo = useFlow((s) => s.demo)
+  const startDemo = useFlow((s) => s.startDemo)
   const exportFlow = useFlow((s) => s.exportFlow)
   const fileInput = useRef<HTMLInputElement>(null)
 
@@ -94,6 +96,14 @@ function FlowsGroup() {
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
+          {!demo && (
+            <SidebarMenuItem>
+              <SidebarMenuButton className="text-muted-foreground" tooltip="Play the demo" onClick={startDemo}>
+                <HugeiconsIcon icon={PlayCircleIcon} />
+                <span>Play the demo</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           <SidebarMenuItem>
             <SidebarMenuButton className="text-muted-foreground" tooltip="Open a flow file…" onClick={() => fileInput.current?.click()}>
               <HugeiconsIcon icon={FolderOpenIcon} />

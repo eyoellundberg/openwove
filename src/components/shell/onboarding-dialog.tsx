@@ -13,6 +13,7 @@ export function OnboardingDialog() {
   const profile = useFlow((s) => s.profile)
   const checked = useFlow((s) => s.profileChecked)
   const save = useFlow((s) => s.saveProfile)
+  const startDemo = useFlow((s) => s.startDemo)
   const [step, setStep] = useState<'intro' | 'you' | 'keys'>('intro')
   const [draft, setDraft] = useState<Profile>(() => ({ company: '', ...guessPlace() }))
 
@@ -22,8 +23,15 @@ export function OnboardingDialog() {
         <DialogTitle className="sr-only">Welcome to OpenWove</DialogTitle>
         {step === 'intro' ? (
           <>
-            <DialogDescription className="sr-only">A short welcome, then two quick questions.</DialogDescription>
-            <WeaveIntro onContinue={() => setStep('you')} />
+            <DialogDescription className="sr-only">A short welcome, then two quick questions, or a demo first.</DialogDescription>
+            <WeaveIntro
+              onContinue={() => setStep('you')}
+              onDemo={() => {
+                // Their country and language are best guesses here; Settings has them if they want to change them.
+                startDemo()
+                save(draft)
+              }}
+            />
           </>
         ) : step === 'you' ? (
           <>

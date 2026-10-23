@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { LiveHeader } from '@/components/live/live-header'
 import { LiveView } from '@/components/live/live-view'
+import { DemoBanner } from '@/components/shell/demo-banner'
 import { AppSidebar } from '@/components/shell/app-sidebar'
 import { OnboardingDialog } from '@/components/shell/onboarding-dialog'
 import { SettingsDialog } from '@/components/shell/settings-dialog'
@@ -48,6 +49,7 @@ export default function App() {
           {view !== 'usage' && (
             <>
               {view === 'live' ? <LiveHeader /> : <SetupHeader />}
+              <DemoBanner />
               <div className="flex min-h-0 flex-1 flex-col px-4 py-4 sm:px-6">
                 {/* Mounted only while open, so React Flow measures the cards and fits them on arrival. */}
                 {view === 'setup' && (
